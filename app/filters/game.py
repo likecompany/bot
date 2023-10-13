@@ -7,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 from likeinterface import Interface
 from likeinterface.exceptions import LikeInterfaceError
 from likeinterface.methods import GetGame
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from utils.cards_generator import CardsGenerator
 
@@ -19,6 +19,8 @@ class PlayerInformation(BaseModel):
 
 
 class GameInformation(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     cards_generator: Optional[CardsGenerator] = None
     board: Optional[str] = None
     players: Optional[List[PlayerInformation]] = None
