@@ -52,7 +52,8 @@ interface_settings = InterfaceSettings()
 
 
 class FSMSettings(BaseSettings):
-    FSM_URL: str
+    FSM_HOSTNAME: str
+    FSM_PORT: int
 
 
 fsm_settings = FSMSettings()

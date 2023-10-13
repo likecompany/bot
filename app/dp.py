@@ -15,7 +15,7 @@ def create_dispatcher() -> Dispatcher:
 
     dispatcher = Dispatcher(
         storage=RedisStorage(
-            redis=Redis.from_url(fsm_settings.FSM_URL),
+            redis=Redis(hostname=fsm_settings.FSM_HOSTNAME, port=fsm_settings.FSM_PORT),
         ),
         fsm_strategy=FSMStrategy.CHAT,
         interface=interface,
