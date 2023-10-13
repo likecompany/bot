@@ -8,8 +8,8 @@ services:
     command: redis-server --port ${REDIS_PORT} --save 20 1 --loglevel warning
     env_file:
       - ${PWD}/.env
-    ports:
-      - ${REDIS_PORT}:${REDIS_PORT}
+    expose:
+      - ${FSM_PORT}
     networks:
       - like_network
     healthcheck:
