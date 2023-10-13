@@ -10,7 +10,7 @@ services:
       "echo '[+] Running Bot Backend' && \
       python main.py"
     volumes:
-      - ${PWD}/app:/app
+      - ${PWD}/bot/app:/app
     env_file:
       - ${PWD}/.env
     depends_on:
