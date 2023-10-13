@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from typing import Union
-
 from aiogram import Router
-from aiogram.filters import KICKED, LEAVE_TRANSITION, LEFT, Command, or_f
+from aiogram.filters import Command, or_f
 from aiogram.fsm.context import FSMContext
-from aiogram.types import ChatMember, Message
+from aiogram.types import Message
 from likeinterface import Interface
 from likeinterface.exceptions import LikeInterfaceError
 from likeinterface.methods import JoinToGame, LeftFromGame
@@ -55,14 +53,8 @@ async def join_to_game_handler(
     GameFilter(),
     UserInGame(),
 )
-@router.chat_member(
-    LEFT | KICKED | LEAVE_TRANSITION,
-    or_f(GameState.game_in_chat, GameState.game_finished, GameState.game_in_progress),
-    GameFilter(),
-    UserInGame(),
-)
 async def left_from_not_started_game_handler(
-    event: Union[ChatMember, Message],
+    message: Message,
     state: FSMContext,
     interface: Interface,
     balance: Balance,
@@ -75,8 +67,7 @@ async def left_from_not_started_game_handler(
     finally:
         chat_state = await state.get_state()
         if chat_state == GameState.game_in_progress:
-            if isinstance(event, Message):
-                await event.reply(text="You've exit of the game, wait until game ended")
+            await message.reply(text="You've exit of the game, wait until game ended")
         else:
             if chat_state != GameState.game_finished.state:
                 await interface.request(
@@ -85,5 +76,4 @@ async def left_from_not_started_game_handler(
                         balance=balance.balance + game.players[player.position].stack,
                     )
                 )
-            if isinstance(event, Message):
-                await event.reply(text="You've exit of the game")
+            await message.reply(text="You've exit of the game")

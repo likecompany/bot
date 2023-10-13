@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from aiogram.filters import Filter
 from aiogram.fsm.context import FSMContext
+from aiogram.types import TelegramObject
 from likeinterface import Interface
 from likeinterface.exceptions import LikeInterfaceError
 from likeinterface.methods import GetGame
@@ -28,7 +29,10 @@ class GameInformation(BaseModel):
 
 class GameFilter(Filter):
     async def __call__(
-        self, state: FSMContext, interface: Interface
+        self,
+        event: TelegramObject,
+        state: FSMContext,
+        interface: Interface,
     ) -> Union[bool, Dict[str, Any]]:
         data = await state.get_data()
 

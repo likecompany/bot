@@ -19,7 +19,7 @@ class UserMiddleware(BaseMiddleware):
         data: Dict[str, Any],
     ) -> Any:
         interface: Optional[Interface] = data.get("interface")
-        event_user: Optional[User] = data.get("event_user")
+        event_user: Optional[User] = data.get("event_from_user")
 
         if not interface or not event_user:
             return await handler(event, data)

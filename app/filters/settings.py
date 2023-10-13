@@ -4,6 +4,7 @@ from typing import Any, Dict
 
 from aiogram.filters import Filter
 from aiogram.fsm.context import FSMContext
+from aiogram.types import TelegramObject
 from pydantic import BaseModel
 
 
@@ -13,7 +14,7 @@ class Settings(BaseModel):
 
 
 class SettingsFilter(Filter):
-    async def __call__(self, state: FSMContext) -> Dict[str, Any]:
+    async def __call__(self, event: TelegramObject, state: FSMContext) -> Dict[str, Any]:
         data = await state.get_data()
 
         return {"settings": Settings.model_validate(data)}
