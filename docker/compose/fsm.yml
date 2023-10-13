@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   fsm:
-    image: fsm:latest
+    image: redis:latest
     volumes:
       - fsm_data:/data
     command: redis-server --port ${REDIS_PORT} --save 20 1 --loglevel warning
