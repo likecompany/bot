@@ -4,7 +4,7 @@ services:
   bot:
     image: bot:latest
     build:
-      context: ${PWD}
+      context: ${PWD}/bot
       dockerfile: docker/Dockerfile
     command: /bin/bash -c \
       "echo '[+] Running Bot Backend' && \
