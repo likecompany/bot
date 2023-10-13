@@ -14,7 +14,7 @@ services:
     env_file:
       - ${PWD}/.env
     depends_on:
-      bot_database:
+      fsm:
         condition: service_healthy
     networks:
       - like_network
