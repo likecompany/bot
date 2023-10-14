@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from aiogram import Router, html
-from aiogram.filters import Command, CommandObject
+from aiogram.filters import Command, CommandObject, invert_f
 from aiogram.types import Message
 from likeinterface import Interface
 from likeinterface.enums import Action as AAction
@@ -21,7 +21,7 @@ router = Router()
     GameState.game_in_progress,
     GameFilter(),
     UserIsCurrent(),
-    ~UserIsLeft(),
+    invert_f(UserIsLeft()),
 )
 async def actions_without_args_handler(
     message: Message,
@@ -47,7 +47,7 @@ async def actions_without_args_handler(
     )
 
     for action in actions:
-        if to_execute == action.action:
+        if to_execute.value == action.action:
             await interface.request(
                 method=ExecuteAction(
                     access=game_access,
@@ -64,7 +64,7 @@ async def actions_without_args_handler(
     GameState.game_in_progress,
     GameFilter(),
     UserIsCurrent(),
-    ~UserIsLeft(),
+    invert_f(UserIsLeft()),
 )
 async def raise_actions_handler(
     message: Message,

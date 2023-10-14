@@ -6,7 +6,6 @@ from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardButton, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from pydantic import ValidationError
 
 from exc import InvalidValueError
 from filters import Owner, Settings, SettingsFilter
@@ -36,13 +35,11 @@ def settings_inline_keyboard_builder() -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     builder.row(
         get_settings_button(attr="small_blind_bet", text="Small Blind"),
-        get_settings_button(attr="small_blind_bet", text="Small Blind", show=False),
+        get_settings_button(attr="small_blind_bet", text="Edit", show=False),
     )
     builder.row(
         get_settings_button(attr="big_blind_multiplication", text="Big Blind Multiplication"),
-        get_settings_button(
-            attr="big_blind_multiplication", text="Big Blind Multiplication", show=False
-        ),
+        get_settings_button(attr="big_blind_multiplication", text="Edit", show=False),
     )
 
     return builder
@@ -60,7 +57,7 @@ async def settings_command_handler(message: Message) -> None:
 
 
 @router.message(
-    SettingsCallbackData.filter(),
+    GameState.update_settings,
     Owner(),
     SettingsFilter(),
 )
@@ -72,17 +69,22 @@ async def update_state_handler(
     data = await state.get_data()
 
     try:
-        setattr(settings, data.pop("attr"), message.text)
-    except ValidationError:
+        new_setting = int(message.text)
+    except ValueError:
         raise InvalidValueError("Value must be integer")
+    else:
+        if new_setting <= 0:
+            raise InvalidValueError("Value must be greater than zero")
 
-    await state.set_data({**settings.model_dump(), **data})
+    setattr(settings, data.pop("attr"), new_setting)
+    await state.update_data(**settings.model_dump())
     await state.set_state(GameState.no_state)
     await message.answer(text="Value is updated!")
 
 
 @router.callback_query(
     SettingsCallbackData.filter(),
+    GameState.no_state,
     Owner(),
     SettingsFilter(),
 )

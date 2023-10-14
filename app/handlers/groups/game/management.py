@@ -10,7 +10,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
 from aiogram.types import CallbackQuery, InlineKeyboardButton, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aioschedule import CancelJob, every
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from likeinterface import Interface
 from likeinterface.enums import Action, Round, State
 from likeinterface.exceptions import LikeInterfaceError
@@ -80,7 +80,7 @@ async def create_game_handler(
 
     await message.answer(
         text=f"Available new game\n\n"
-        f"Stacksize: {bb_bet * settings.small_blind_bet}\n\n"
+        f"Stacksize: {bb_bet * settings.big_blind_multiplication}\n\n"
         f"Small Blind: {sb_bet}\n"
         f"Big Blind: {bb_bet}",
     )
@@ -97,6 +97,7 @@ async def adjust_game_handler(
     bot: Bot,
     state: FSMContext,
     interface: Interface,
+    scheduler: AsyncIOScheduler,
     game: Game,
     game_access: str,
 ) -> None:
@@ -119,36 +120,51 @@ async def adjust_game_handler(
     )
 
     await state.set_state(GameState.game_in_progress)
-    await state.update_data(game_information=game_information)
+    await state.update_data(**game_information.model_dump())
 
     await message.answer(text="Game was started")
 
-    every().second.do(
+    scheduler.add_job(
         core,
-        bot=bot,
-        chat_id=message.chat.id,
-        state=state,
-        interface=interface,
-        game_access=game_access,
+        kwargs={
+            "scheduler": scheduler,
+            "job_id": game_access,
+            "bot": bot,
+            "chat_id": message.chat.id,
+            "state": state,
+            "interface": interface,
+            "game_access": game_access,
+        },
+        trigger="interval",
+        id=game_access,
+        max_instances=1,
+        seconds=1,
     )
 
 
 @router.message(
     Command(commands="delete"),
     or_f(GameState.game_in_chat, GameState.game_finished),
+    GameFilter(),
     Owner(),
 )
 async def delete_game_handler(
     message: Message,
     state: FSMContext,
     interface: Interface,
+    game: Game,
+    game_access: str,
 ) -> None:
-    data = await state.get_data()
+    await interface.request(method=DeleteGame(access=game_access))
 
-    await interface.request(method=DeleteGame(access=data["game_access"]))
+    if await state.get_state() == GameState.game_in_chat.state:
+        for player in game.players:
+            balance = await interface.request(method=GetBalance(user_id=player.id))
+            await interface.request(
+                method=SetBalance(user_id=balance.user.id, balance=balance.balance + player.stack)
+            )
 
     await state.set_state(GameState.no_state)
-
     await message.answer(text="Game was deleted")
 
 
@@ -163,37 +179,47 @@ async def round_handler(
     game: Game,
     game_information: GameInformation,
 ) -> None:
-    def player_state_to_string(state: State) -> str:
+    def player_state_to_string(state: int) -> str:
+        state = State(state)
+
         if state == State.INIT:
             return "action not posted"
         if state == State.OUT:
             return "out from game"
         if state == State.ALIVE:
             return "alive"
-        if state == "allin":
+        if state == State.ALLIN:
             return "allin"
 
         return "unknown"
 
     await message.answer(
-        text=f"Round {game.round}:\n".join(
-            f"{await get_user_link(interface=interface, user_id=player.user_id)}, "
-            f"is left - {game.players[player.position].is_left}, "
-            f"chips - {game.players[player.position].behind}, "
-            f"round bet - {game.players[player.position].round_bet}, "
-            f"game bet - {game.players[player.position].front}, "
-            f"state - {player_state_to_string(game.players[player.position].state)}"
-            f""
-            for player in game_information.players
-        ),
+        text=f"Round - {game.round}\n\n"
+        f"Current: {await get_user_link(interface=interface, user_id=game.players[game.current].id)}\n\n"
+        f"Players:\n"
+        + "\n\n".join(
+            [
+                f"{await get_user_link(interface=interface, user_id=player.user_id)}, "
+                f"is left - {game.players[player.position].is_left}, "
+                f"chips - {game.players[player.position].behind}, "
+                f"round bet - {game.players[player.position].round_bet}, "
+                f"game bet - {game.players[player.position].front}, "
+                f"state - {player_state_to_string(game.players[player.position].state)}"
+                for player in game_information.players
+            ]
+        )
     )
 
 
 def gamecards_inline_keyboard_builder() -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="Board", callback_data=GameCardsCallbackData(view_hand=False)),
-        InlineKeyboardButton(text="My Cards", callback_data=GameCardsCallbackData(view_hand=True)),
+        InlineKeyboardButton(
+            text="Board", callback_data=GameCardsCallbackData(view_hand=False).pack()
+        ),
+        InlineKeyboardButton(
+            text="My Cards", callback_data=GameCardsCallbackData(view_hand=True).pack()
+        ),
     )
 
     return builder
@@ -239,6 +265,8 @@ async def cards_callback_query_handler(
 
 
 async def core(
+    scheduler: AsyncIOScheduler,
+    job_id: int,
     bot: Bot,
     chat_id: int,
     state: FSMContext,
@@ -252,18 +280,17 @@ async def core(
     try:
         game = await interface.request(method=GetGame(access=game_access))
     except LikeInterfaceError:
-        return CancelJob
+        return scheduler.remove_job(job_id=job_id)
 
-    cards_generator = data["cards_generator"]
-    game_information = GameInformation.model_validate(data["game_information"])
+    game_information = GameInformation.model_validate(data)
 
     if game.round != Round.PREFLOP:
         for player in game_information.players:
             if not player.cards and not game.players[player.position].is_left:
-                player.cards = str().join(cards_generator.deal(n=hand_size))
+                player.cards = str().join(game_information.cards_generator.deal(n=hand_size))
 
     if not game_information.board:
-        game_information.board = str().join(cards_generator.deal(n=board_size))
+        game_information.board = str().join(game_information.cards_generator.deal(n=board_size))
 
     if game.round == Round.SHOWDOWN:
         cards = Cards(
@@ -292,9 +319,9 @@ async def core(
         await bot.send_message(chat_id=chat_id, text=f"Winners:\n{text}")
         await state.set_state(GameState.game_finished)
 
-        return CancelJob
+        return scheduler.remove_job(job_id=job_id)
 
-    if game[game.current.value].is_left:
+    if game.players[game.current].is_left:
         possible_actions = await interface.request(method=GetPossibleActions(access=game_access))
 
         to_execute = None
@@ -304,7 +331,7 @@ async def core(
             if action.action == Action.FOLD and not to_execute:
                 to_execute = action
 
-        with suppress(Exception):
+        with suppress(LikeInterfaceError):
             await interface.request(method=ExecuteAction(access=game_access, action=to_execute))
             return None
     return None

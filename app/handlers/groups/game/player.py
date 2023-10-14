@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from aiogram import Router
-from aiogram.filters import Command, or_f
+from aiogram.filters import Command, invert_f, or_f
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from likeinterface import Interface
@@ -11,7 +11,7 @@ from likeinterface.methods.set_balance import SetBalance
 from likeinterface.types import Balance, Game
 
 from exc import JoinError, NotEnoughBalanceError
-from filters import GameFilter, PlayerInformation, UserInGame
+from filters import GameFilter, GameInformation, PlayerInformation, UserInGame
 from states import GameState
 
 router = Router()
@@ -21,14 +21,16 @@ router = Router()
     Command(commands="join"),
     GameState.game_in_chat,
     GameFilter(),
-    ~UserInGame(),
+    invert_f(UserInGame()),
 )
 async def join_to_game_handler(
     message: Message,
+    state: FSMContext,
     interface: Interface,
     balance: Balance,
     game: Game,
     game_access: str,
+    game_information: GameInformation,
 ) -> None:
     stacksize = game.bb_bet * game.bb_mult
     if balance.balance < stacksize:
@@ -41,10 +43,15 @@ async def join_to_game_handler(
     except LikeInterfaceError:
         raise JoinError()
 
-    await message.reply(text="You've join to game")
+    game_information.players.append(
+        PlayerInformation(position=len(game_information.players), user_id=balance.user.id)
+    )
+
     await interface.request(
         method=SetBalance(user_id=balance.user.id, balance=balance.balance - stacksize)
     )
+    await state.update_data(**game_information.model_dump())
+    await message.reply(text="You've join to game")
 
 
 @router.message(
@@ -53,12 +60,13 @@ async def join_to_game_handler(
     GameFilter(),
     UserInGame(),
 )
-async def left_from_not_started_game_handler(
+async def exit_from_game(
     message: Message,
     state: FSMContext,
     interface: Interface,
     balance: Balance,
     game: Game,
+    game_information: GameInformation,
     game_access: str,
     player: PlayerInformation,
 ) -> None:
@@ -70,6 +78,7 @@ async def left_from_not_started_game_handler(
             await message.reply(text="You've exit of the game, wait until game ended")
         else:
             if chat_state != GameState.game_finished.state:
+                game_information.players.remove(player)
                 await interface.request(
                     method=SetBalance(
                         user_id=balance.user.id,
@@ -77,3 +86,5 @@ async def left_from_not_started_game_handler(
                     )
                 )
             await message.reply(text="You've exit of the game")
+
+    await state.update_data(**game_information.model_dump())

@@ -8,7 +8,7 @@ from aiogram.types import TelegramObject
 from likeinterface import Interface
 from likeinterface.exceptions import LikeInterfaceError
 from likeinterface.methods import GetGame
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field
 
 from utils.cards_generator import CardsGenerator
 
@@ -20,11 +20,9 @@ class PlayerInformation(BaseModel):
 
 
 class GameInformation(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    cards_generator: Optional[CardsGenerator] = None
+    cards_generator: CardsGenerator = CardsGenerator()
     board: Optional[str] = None
-    players: Optional[List[PlayerInformation]] = None
+    players: List[PlayerInformation] = Field(default_factory=list)
 
 
 class GameFilter(Filter):
@@ -45,5 +43,5 @@ class GameFilter(Filter):
         return {
             "game": game,
             "game_access": game_access,
-            "game_information": GameInformation.model_validate(data.get("game_information")),
+            "game_information": GameInformation.model_validate(data),
         }

@@ -4,26 +4,25 @@ import random
 from typing import List
 
 from likeinterface.enums import Rank, Suit
+from pydantic import BaseModel
 
 
-class Card:
-    def __init__(self, rank: Rank, suit: Suit) -> None:
-        self.rank = rank
-        self.suit = suit
+class Card(BaseModel):
+    rank: Rank
+    suit: Suit
 
     def __str__(self) -> str:
         return self.rank.value + self.suit.value
 
 
-class CardsGenerator:
-    def __init__(self) -> None:
-        self.cards = [Card(rank=rank, suit=suit) for rank in Rank for suit in Suit]
-        self.last = 0
-
-        random.shuffle(self.cards)
+class CardsGenerator(BaseModel):
+    cards: List[Card] = random.sample(
+        [Card(rank=rank, suit=suit) for rank in Rank for suit in Suit], k=len(Rank) * len(Suit)
+    )
+    last: int = 0
 
     def deal(self, n: int) -> List[Card]:
-        cards = random.sample(self.cards[self.last :], n)
+        cards = self.cards[self.last :]
         self.last += n
 
         return cards  # noqa
