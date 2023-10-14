@@ -349,12 +349,12 @@ async def core(
 
         to_execute = None
         for action in possible_actions:
-            if action.action == Action.CHECK:
+            if action.action == Action.CHECK.value:
                 to_execute = action
-            if action.action == Action.FOLD and not to_execute:
+            if action.action == Action.FOLD.value and not to_execute:
                 to_execute = action
 
-        with suppress(LikeInterfaceError):
+        with suppress(Exception):
             await interface.request(method=ExecuteAction(access=game_access, action=to_execute))
 
     await state.update_data(**game_information.model_dump())
