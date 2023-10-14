@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import textwrap
 from contextlib import suppress
 
 from aiogram import Bot, Router
@@ -27,6 +28,7 @@ from likeinterface.methods import (
 )
 from likeinterface.methods.set_balance import SetBalance
 from likeinterface.types import Cards, Game
+from pydantic import ValidationError
 
 from exc import AdjustError
 from filters import (
@@ -255,9 +257,9 @@ async def cards_callback_query_handler(
             show_alert=True,
         )
     else:
-        SLICE = 1 + game.round if 1 <= game.round <= 3 else 4
+        SLICE = (2 + game.round) if Round.FLOP.value <= game.round <= Round.RIVER.value else 5
         await callback_query.answer(
-            text=game_information.board[0::SLICE]
+            text=game_information.board[0 : (SLICE * 2)]
             if game_information.board or game.round == Round.PREFLOP
             else "There is no board cards yet",
             show_alert=True,
@@ -285,28 +287,30 @@ async def core(
     game_information = GameInformation.model_validate(data)
 
     if game.round != Round.PREFLOP.value:
-        game_information.board = str().join(game_information.cards_generator.deal(n=board_size))
+        if not game_information.board:
+            game_information.board = str().join(
+                game_information.cards_generator.deal(n=board_size)
+            )
+
         for player in game_information.players:
-            if (
-                not player.cards
-                and not game.players[player.position].is_left
-                and not game.players[player.position].state == State.OUT.value
-            ):
+            if not player.cards and game.players[player.position].state != State.OUT.value:
                 player.cards = str().join(game_information.cards_generator.deal(n=hand_size))
 
     if game.round == Round.SHOWDOWN.value:
-        cards = Cards(
-            board=game_information.board,
-            hands=[player.cards for player in game_information.players],
-        )
         try:
-            winners = await interface.request(method=GetEvaluationResult(cards=cards))
-        except LikeInterfaceError:
-            text = None
+            cards = Cards(
+                board=textwrap.fill(game_information.board, 2).split("\n"),
+                hands=[player.cards for player in game_information.players],
+            )
+        except ValidationError:
+            cards = text = None
         else:
+            winners = await interface.request(method=GetEvaluationResult(cards=cards))
             text = "\n".join(
-                f"{hand.hand.title()} - {await get_user_link(interface=interface, user_id=game.players[hand.id].id)}"
-                for hand in winners
+                [
+                    f"{hand.hand.title()} - {await get_user_link(interface=interface, user_id=game.players[hand.id].id)}"
+                    for hand in winners
+                ]
             )
 
         await interface.request(method=SetNextGame(access=game_access, cards=cards))
@@ -352,5 +356,7 @@ async def core(
 
         with suppress(LikeInterfaceError):
             await interface.request(method=ExecuteAction(access=game_access, action=to_execute))
-            return None
+
+    await state.update_data(**game_information.model_dump())
+
     return None

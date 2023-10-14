@@ -22,7 +22,7 @@ class CardsGenerator(BaseModel):
     last: int = 0
 
     def deal(self, n: int) -> List[str]:
-        cards = self.cards[self.last :]
+        cards = self.cards[self.last : self.last + n]
         self.last += n
 
         return [str(card) for card in cards]

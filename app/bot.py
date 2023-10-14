@@ -9,6 +9,7 @@ from aiogram.types import (
     BotCommand,
     BotCommandScopeAllGroupChats,
     BotCommandScopeAllPrivateChats,
+    ChatAdministratorRights,
 )
 
 from core.settings import bot_settings
@@ -20,6 +21,20 @@ async def create_bot() -> Bot:
         parse_mode=ParseMode.HTML,
     )
     with suppress(TelegramAPIError):
+        await bot.set_my_default_administrator_rights(
+            rights=ChatAdministratorRights(
+                is_anonymous=False,
+                can_manage_chat=True,
+                can_delete_messages=True,
+                can_manage_video_chats=False,
+                can_restrict_members=False,
+                can_promote_members=False,
+                can_change_info=True,
+                can_invite_users=False,
+                can_pin_messages=True,
+            ),
+        )
+
         await bot.set_my_commands(
             commands=[
                 BotCommand(command="/start", description="🖐 Welcome message"),
@@ -50,10 +65,12 @@ async def create_bot() -> Bot:
             ],
             scope=BotCommandScopeAllGroupChats(),
         )
+
         await bot.set_my_description(
             description="Bot that help to play Texas Holdem Poker.\n\nFor support text to @copper_boy"
         )
         await bot.set_my_short_description(short_description="Play Texas Holdem Poker Now!")
+
         await bot.set_my_name(name="Game")
 
     return bot
