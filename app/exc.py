@@ -21,17 +21,29 @@ class AdjustError(GameError):
     ...
 
 
-class NotEnoughBalanceError(GameError):
+class PlayerError(GameError):
     ...
 
 
-class JoinError(GameError):
+class NotEnoughBalanceError(PlayerError):
     ...
 
 
-class LeftError(GameError):
+class JoinError(PlayerError):
     ...
 
 
-class InvalidActionError(GameError):
+class LeftError(PlayerError):
+    ...
+
+
+class ActionError(GameError):
+    ...
+
+
+class NoPossibleActionsError(ActionError):
+    ...
+
+
+class InvalidActionError(ActionError):
     ...

@@ -36,7 +36,7 @@ class GameFilter(Filter):
 
         game_access = data.get("game_access")
         try:
-            game = await interface.request(method=GetGame(access=data.get("game_access")))
+            game = await interface.request(method=GetGame(access=game_access))
         except LikeInterfaceError:
             return False
 
