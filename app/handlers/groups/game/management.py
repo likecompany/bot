@@ -284,20 +284,31 @@ async def core(
 
     game_information = GameInformation.model_validate(data)
 
-    if game.round != Round.PREFLOP:
+    if game.round != Round.PREFLOP.value:
+        game_information.board = str().join(game_information.cards_generator.deal(n=board_size))
         for player in game_information.players:
-            if not player.cards and not game.players[player.position].is_left:
+            if (
+                not player.cards
+                and not game.players[player.position].is_left
+                and not game.players[player.position].state == State.OUT.value
+            ):
                 player.cards = str().join(game_information.cards_generator.deal(n=hand_size))
 
-    if not game_information.board:
-        game_information.board = str().join(game_information.cards_generator.deal(n=board_size))
-
-    if game.round == Round.SHOWDOWN:
+    if game.round == Round.SHOWDOWN.value:
         cards = Cards(
             board=game_information.board,
             hands=[player.cards for player in game_information.players],
         )
-        winners = await interface.request(method=GetEvaluationResult(cards=cards))
+        try:
+            winners = await interface.request(method=GetEvaluationResult(cards=cards))
+        except LikeInterfaceError:
+            text = None
+        else:
+            text = "\n".join(
+                f"{hand.hand.title()} - {await get_user_link(interface=interface, user_id=game.players[hand.id].id)}"
+                for hand in winners
+            )
+
         await interface.request(method=SetNextGame(access=game_access, cards=cards))
 
         game = await interface.request(method=GetGame(access=game_access))
@@ -311,12 +322,20 @@ async def core(
                 )
             )
 
+        if text:
+            await bot.send_message(chat_id=chat_id, text=f"Winners:\n{text}")
+        else:
+            await bot.send_message(
+                chat_id=chat_id, text="All players are outs, there is only 1 winner"
+            )
+            for player in game.players:
+                if player.state in [State.ALIVE, State.ALLIN]:
+                    await bot.send_message(
+                        chat_id=chat_id,
+                        text=f"Player - {await get_user_link(interface)} is winner",
+                    )
+
         await bot.send_message(chat_id=chat_id, text="Game was ended")
-        text = "\n".join(
-            f"{hand.hand.title()} - {await get_user_link(interface=interface, user_id=game.players[hand.id].id)}"
-            for hand in winners
-        )
-        await bot.send_message(chat_id=chat_id, text=f"Winners:\n{text}")
         await state.set_state(GameState.game_finished)
 
         return scheduler.remove_job(job_id=job_id)

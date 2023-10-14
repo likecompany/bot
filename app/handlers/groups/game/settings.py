@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from aiogram import Router
-from aiogram.filters import Command
+from aiogram.filters import Command, or_f
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import default_state
 from aiogram.types import CallbackQuery, InlineKeyboardButton, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -47,6 +48,7 @@ def settings_inline_keyboard_builder() -> InlineKeyboardBuilder:
 
 @router.message(
     Command(commands="settings"),
+    or_f(default_state, GameState.no_state),
     Owner(),
 )
 async def settings_command_handler(message: Message) -> None:

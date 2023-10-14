@@ -21,8 +21,8 @@ class CardsGenerator(BaseModel):
     )
     last: int = 0
 
-    def deal(self, n: int) -> List[Card]:
+    def deal(self, n: int) -> List[str]:
         cards = self.cards[self.last :]
         self.last += n
 
-        return cards  # noqa
+        return [str(card) for card in cards]

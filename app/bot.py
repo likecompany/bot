@@ -21,11 +21,9 @@ async def create_bot() -> Bot:
     )
     with suppress(TelegramAPIError):
         await bot.set_my_commands(
-            commands=[BotCommand(command="/evaluate", description="🧮 Evaluate Poker Hands")]
-        )
-        await bot.set_my_commands(
             commands=[
                 BotCommand(command="/start", description="🖐 Welcome message"),
+                BotCommand(command="/evaluate", description="🧮 Evaluate Poker Hands"),
                 BotCommand(command="/balance", description="💳 User Balance"),
             ],
             scope=BotCommandScopeAllPrivateChats(),
