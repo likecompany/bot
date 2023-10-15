@@ -333,9 +333,6 @@ async def core(
             )
         except LikeInterfaceError:
             await bot.send_message(chat_id=chat_id, text="Game start failed")
-        else:
-            game_information.is_started = True
-
             game = await interface.request(method=GetGame(access=game_access))
             game_information = GameInformation(
                 cards_generator=CardsGenerator(),
@@ -344,6 +341,9 @@ async def core(
                     for position, player in enumerate(game.players)
                 ],
             )
+        else:
+            game_information.cards_generator = CardsGenerator()
+            game_information.is_started = True
 
             await state.set_state(GameState.game_in_progress)
             await bot.send_message(chat_id=chat_id, text="The game is starting, get ready")
