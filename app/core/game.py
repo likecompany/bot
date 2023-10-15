@@ -19,7 +19,6 @@ from likeinterface.methods import (
     SetNextGame,
 )
 from likeinterface.methods.set_balance import SetBalance
-from pydantic import ValidationError
 
 from enums import Action, Round, State
 from keyboards import cards_inline_keyboard_builder
@@ -34,6 +33,7 @@ async def find_winners(
     state: FSMContext,
     interface: Interface,
     session: Session,
+    board_size: int = 5,
 ) -> None:
     if not session.started or session.game.round != Round.SHOWDOWN.value:
         return logger.info(
@@ -41,15 +41,18 @@ async def find_winners(
             % chat_id
         )
 
+    cards = types.Cards(
+        board=map(str, session.board),
+        hands=[str().join(map(str, player.hand)) for player in session.players],
+    )
+    if len(session.board) != board_size:
+        cards = None
+
     try:
-        cards = types.Cards(
-            board=map(str, session.board),
-            hands=[str().join(map(str, player.hand)) for player in session.players],
-        )
-    except ValidationError:
+        winners = await interface.request(method=GetEvaluationResult(cards=cards))
+    except LikeInterfaceError:
         cards = text = None
     else:
-        winners = await interface.request(method=GetEvaluationResult(cards=cards))
         text = "\n".join(
             f"{session.players[hand.id].mention_html()} - {hand.hand.title()}" for hand in winners
         )
@@ -57,21 +60,19 @@ async def find_winners(
     await interface.request(method=SetNextGame(access=session.access, cards=cards))
     game = await interface.request(method=GetGame(access=session.access))
 
+    await bot.send_message(chat_id=chat_id, text="Players chips after game")
     for position, player in enumerate(session.players):
         balance = await interface.request(method=GetBalance(user_id=player.user.id))
         await interface.request(
             method=SetBalance(
-                user_id=player.user_id,
+                user_id=player.user.id,
                 balance=balance.balance + game.players[position].stack,
             )
         )
 
         await bot.send_message(
             chat_id=chat_id,
-            text="Players chips after game:\n\n"
-            + "\n".join(
-                f"{player.mention_html()} - before: {player.player.stack}, after {game.players[position].stack}"
-            ),
+            text=f"{player.mention_html()} - before: {player.player.stack}, after {game.players[position].stack}, difference {game.players[position].stack - player.player.stack}",
         )
 
     if cards and text:
@@ -92,6 +93,7 @@ async def find_winners(
 
     await bot.send_message(chat_id=chat_id, text="Game was ended")
     await state.set_state(GameState.game_finished)
+
     return None
 
 
@@ -115,8 +117,8 @@ async def start_game(
     if players < settings.min_players:
         if session.ready_to_start:
             await bot.send_message(chat_id=chat_id, text="Game doesn't start, not enough players")
-        session.start_at = None
         session.ready_to_start = False
+        session.start_at = None
 
     if not session.ready_to_start:
         session.start_at = None
@@ -139,16 +141,20 @@ async def start_game(
                 )
             )
         except LikeInterfaceError:
-            session.started = session.ready_to_start = False
+            session.started = False
 
             await state.set_state(GameState.game_in_chat)
             await bot.send_message(chat_id=chat_id, text="Game start failed")
         else:
             session.started = True
+            session.last_known_round = None
 
             await state.set_state(GameState.game_in_progress)
             await bot.send_message(chat_id=chat_id, text="The game is started, get ready")
         finally:
+            session.ready_to_start = False
+            session.start_at = None
+
             session.game = await interface.request(method=GetGame(access=session.access))
             session.players = [
                 Player(
@@ -171,6 +177,8 @@ async def round_message(
 
     if session.last_known_round != session.game.round:
         session.last_known_round = session.game.round
+        session.last_known_current_player = None
+
         await bot.send_message(
             chat_id=chat_id,
             text=f"Round: {Round(session.game.round).to_string().capitalize()}",
@@ -202,7 +210,8 @@ async def deal_cards(
 
     if session.game.round == Round.PREFLOP.value:
         for player in session.players:
-            player.hand = session.cards.deal(n=hand_size)
+            if not player.hand:
+                player.hand = session.cards.deal(n=hand_size)
 
     if session.game.round != Round.PREFLOP.value:
         if not session.board:

@@ -18,6 +18,16 @@ router = Router()
 
 
 @router.message(
+    Command(commands="reset"),
+    or_f(default_state, GameState.no_state),
+    IsOwner(),
+)
+async def restart(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    await message.answer(text="Settings have been reset")
+
+
+@router.message(
     Command(commands="settings"),
     or_f(default_state, GameState.no_state),
     IsOwner(),
@@ -42,9 +52,9 @@ async def update_state_handler(
     data = await state.get_data()
 
     try:
-        setattr(settings, data.pop("attr"), int(message.text))
+        settings = settings.model_validate({data.pop("attr"): message.text})
     except ValidationError:
-        raise InvalidValueError("Value must be integer")
+        raise InvalidValueError("Invalid value")
 
     await state.update_data(**settings.model_dump())
     await state.set_state(GameState.no_state)
@@ -53,7 +63,7 @@ async def update_state_handler(
 
 @router.callback_query(
     SettingsCallbackData.filter(),
-    GameState.no_state,
+    or_f(default_state, GameState.no_state),
     SettingsFilter(),
     IsOwner(),
 )

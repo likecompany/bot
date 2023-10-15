@@ -48,6 +48,9 @@ async def create_bot() -> Bot:
                 BotCommand(command="/create", description="🃏 Create New Game (Owner Only)"),
                 BotCommand(command="/delete", description="🃏 Delete Game (Owner Only)"),
                 BotCommand(
+                    command="/reset", description="⚙️ Reset Game Create Settings (Owner Only)"
+                ),
+                BotCommand(
                     command="/settings", description="⚙️ Game Create Settings (Owner Only)"
                 ),
                 BotCommand(command="/join", description="👨‍🦲 Join To Game"),

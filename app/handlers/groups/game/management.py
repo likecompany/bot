@@ -9,8 +9,7 @@ from aiogram.fsm.state import default_state
 from aiogram.types import CallbackQuery, Message
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from likeinterface import Interface, types
-from likeinterface.methods import AddGame, DeleteGame, GetBalance, GetGame
-from likeinterface.methods.set_balance import SetBalance
+from likeinterface.methods import AddGame, DeleteGame, GetGame
 
 from callback_data import CardsCallbackData
 from core.game import core
@@ -99,13 +98,6 @@ async def delete_game_handler(
     session: Session,
 ) -> None:
     await interface.request(method=DeleteGame(access=session.access))
-
-    if await state.get_state() == GameState.game_in_chat.state:
-        for player in session.game.players:
-            balance = await interface.request(method=GetBalance(user_id=player.id))
-            await interface.request(
-                method=SetBalance(user_id=user.id, balance=balance.balance + player.stack)
-            )
 
     await state.set_state(GameState.no_state)
     await message.answer(text="Game was deleted")

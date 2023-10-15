@@ -25,7 +25,7 @@ class UserInGame(Filter):
 
 class UserIsCurrent(Filter):
     async def __call__(self, event: TelegramObject, user: User, session: Session) -> bool:
-        return session.game.players[session.game.current] == user.id
+        return session.game.players[session.game.current].id == user.id
 
 
 class UserIsLeft(Filter):

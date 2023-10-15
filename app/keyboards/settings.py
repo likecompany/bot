@@ -8,7 +8,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from callback_data import SettingsCallbackData
 
 
-def get_settings_row(attr: str, text: str, edit_text: str = "edit") -> Tuple[InlineKeyboardButton]:
+def get_settings_row(attr: str, text: str, edit_text: str = "Edit") -> Tuple[InlineKeyboardButton]:
     return (
         InlineKeyboardButton(
             text=text,
@@ -19,7 +19,7 @@ def get_settings_row(attr: str, text: str, edit_text: str = "edit") -> Tuple[Inl
             ).pack(),
         ),
         InlineKeyboardButton(
-            text=text,
+            text=edit_text,
             callback_data=SettingsCallbackData(
                 attr=attr,
                 text=edit_text,
