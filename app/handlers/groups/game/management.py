@@ -236,12 +236,12 @@ async def core(
 
         game_information.last_known_round = game.round
 
-    if game.round != Round.PREFLOP.value and game_information.is_started:
+    if game_information.is_started:
         if not game_information.board:
             game_information.board = game_information.cards_generator.deal(n=board_size)
 
         for player in game_information.players:
-            if not player.cards and game.players[player.position].state != State.OUT.value:
+            if not player.cards:
                 player.cards = game_information.cards_generator.deal(n=hand_size)
 
     if game.round == Round.SHOWDOWN.value and game_information.is_started:
@@ -332,14 +332,15 @@ async def core(
                 )
             )
         except LikeInterfaceError:
-            return await bot.send_message(chat_id=chat_id, text="Game start failed")
+            await bot.send_message(chat_id=chat_id, text="Game start failed")
+        else:
+            game_information.is_started = True
 
-        game_information.ready_to_start = False
-        game_information.is_started = True
-        game_information.start_at = None
-
-        await state.set_state(GameState.game_in_progress)
-        await bot.send_message(chat_id=chat_id, text="The game is starting, get ready")
+            await state.set_state(GameState.game_in_progress)
+            await bot.send_message(chat_id=chat_id, text="The game is starting, get ready")
+        finally:
+            game_information.ready_to_start = False
+            game_information.start_at = None
 
     await state.update_data(**game_information.model_dump())
 
