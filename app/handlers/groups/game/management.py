@@ -146,10 +146,10 @@ async def cards_callback_query_handler(
             if session.board and session.game.round != Round.PREFLOP.value
             else "There is no board cards yet"
         )
-        + "Hand: "
+        + "\n\nHand: "
         + (
-            " ".join(card.as_string_pretty() for card in session.players[position].cards)
-            if session.players[position].cards
+            " ".join(card.as_string_pretty() for card in session.players[position].hand)
+            if session.players[position].hand
             else "There is no cards yet"
         ),
         show_alert=True,

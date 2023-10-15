@@ -41,3 +41,6 @@ class Session(BaseModel):
     last_known_round: Optional[int] = None
     ready_to_start: bool = False
     start_at: Optional[float] = None
+    last_known_current_player: Optional[int] = None
+    current_player_sent: bool = False
+    action_sent: bool = False

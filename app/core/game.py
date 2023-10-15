@@ -191,7 +191,6 @@ async def round_message(
 
 
 async def deal_cards(
-    bot: Bot,
     chat_id: int,
     session: Session,
     reset: bool = False,
@@ -203,9 +202,8 @@ async def deal_cards(
 
     if session.game.round == Round.PREFLOP.value:
         for player in session.players:
-            player.cards = session.cards.deal(n=hand_size)
+            player.hand = session.cards.deal(n=hand_size)
 
-        await bot.send_message(chat_id=chat_id, text="The game cards have been dealt")
     if session.game.round != Round.PREFLOP.value:
         if not session.board:
             session.board = session.cards.deal(n=board_size)
@@ -213,7 +211,7 @@ async def deal_cards(
     if reset:
         logger.info(
             "(chat_id=%s) Cards: BOARD %s, HANDS %s"
-            % (chat_id, session.board, [player.cards for player in session.players])
+            % (chat_id, session.board, [player.hand for player in session.players])
         )
 
         session.cards.reset()
@@ -232,36 +230,46 @@ async def current_player_message(
         return logger.info("(chat_id=%s) Game is in invalid state, skipping..." % chat_id)
 
     player = session.players[session.game.current]
+
+    if session.last_known_current_player != player.player.id:
+        session.last_known_current_player = player.player.id
+        session.action_sent = False
+        session.current_player_sent = False
+
     if player.player.is_left:
         return await bot.send_message(
             chat_id=chat_id, text=f"{player.mention_html()} is left, auto action will be activated"
         )
 
-    await bot.send_message(
-        chat_id=chat_id,
-        text=f"{player.mention_html()} is current, "
-        f"is left - {player.player.is_left}, "
-        f"chips - {player.player.behind}, "
-        f"round bet - {player.player.round_bet}, "
-        f"game bet - {player.player.front}, "
-        f"state - {State(player.player.state).to_string()}, "
-        f"waiting for your action...",
-    )
+    if not session.current_player_sent:
+        session.current_player_sent = False
 
-    await bot.send_message(
-        chat_id=chat_id,
-        text="No actions available"
-        if not session.actions
-        else "Actions:\n"
-        + "\n".join(
-            Action(action.action).to_string().capitalize()
-            if action.action in [Action.FOLD.value, Action.CHECK.value]
-            else f"{Action(action.action).to_string().capitalize()} - from {session.game.min_raise} to {player.player.behind}"
-            if action.action == Action.RAISE.value
-            else f"{Action(action.action).to_string().capitalize()} - {action.amount}"
-            for action in session.actions
-        ),
-    )
+        await bot.send_message(
+            chat_id=chat_id,
+            text=f"{player.mention_html()} is current, "
+            f"is left - {player.player.is_left}, "
+            f"chips - {player.player.behind}, "
+            f"round bet - {player.player.round_bet}, "
+            f"game bet - {player.player.front}, "
+            f"state - {State(player.player.state).to_string()}, "
+            f"waiting for your action...",
+        )
+
+    if not session.action_sent and session.actions:
+        session.action_sent = True
+
+        await bot.send_message(
+            chat_id=chat_id,
+            text="Actions:\n"
+            + "\n".join(
+                Action(action.action).to_string().capitalize()
+                if action.action in [Action.FOLD.value, Action.CHECK.value]
+                else f"{Action(action.action).to_string().capitalize()} - from {session.game.min_raise} to {player.player.behind}"
+                if action.action == Action.RAISE.value
+                else f"{Action(action.action).to_string().capitalize()} - {action.amount}"
+                for action in session.actions
+            ),
+        )
 
     return None
 
@@ -336,7 +344,7 @@ async def core(
     )
     await round_message(bot=bot, chat_id=chat_id, session=session)
     await deal_cards(
-        bot=bot, chat_id=chat_id, session=session, reset=session.game.round == Round.SHOWDOWN.value
+        chat_id=chat_id, session=session, reset=session.game.round == Round.SHOWDOWN.value
     )
     await current_player_message(bot=bot, chat_id=chat_id, session=session)
     await auto_execute_action(bot=bot, chat_id=chat_id, interface=interface, session=session)
