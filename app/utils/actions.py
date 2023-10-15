@@ -64,7 +64,7 @@ async def get_possible_actions_text(
             if action.action == AAction.FOLD
             else f"{action_to_string(AAction(action.action)).capitalize()} - from {game.min_raise} to {game.players[game.current].behind}"
             if action.action == AAction.RAISE.value
-            else action_to_string(AAction(action.action)).capitalize()
+            else f"{action_to_string(AAction(action.action)).capitalize()} - {action.amount}"
             for action in actions
         )
     )

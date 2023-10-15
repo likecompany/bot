@@ -243,8 +243,8 @@ async def core(
     if game.round == Round.SHOWDOWN.value and game_information.is_started:
         try:
             cards = Cards(
-                board=str().join(str(card) for card in game.board),
-                hands=[str(player.cards) for player in game_information.players],
+                board=str().join(map(str, game_information.board)),
+                hands=[str().join(map(str, player.cards) for player in game_information.players)],
             )
         except (
             ValidationError,

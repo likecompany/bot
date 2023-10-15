@@ -26,7 +26,7 @@ class GameInformation(BaseModel):
     ready_to_start: bool = False
     is_started: bool = False
     last_known_round: Optional[int] = None
-    start_at: Optional[int] = None
+    start_at: Optional[float] = None
 
 
 class GameFilter(Filter):
