@@ -190,10 +190,10 @@ async def cards_callback_query_handler(
             show_alert=True,
         )
     else:
-        SLICE = 2 + game.round if Round.FLOP.value <= game.round <= Round.RIVER.value else 4
+        SLICE = 2 + game.round if Round.FLOP.value <= game.round <= Round.RIVER.value else 5
         await callback_query.answer(
             text=" ".join(card.as_string_pretty() for card in game_information.board[:SLICE])
-            if game_information.board
+            if game_information.board and game.round != Round.PREFLOP.value
             else "There is no board cards yet",
             show_alert=True,
         )
@@ -335,6 +335,15 @@ async def core(
             await bot.send_message(chat_id=chat_id, text="Game start failed")
         else:
             game_information.is_started = True
+
+            game = await interface.request(method=GetGame(access=game_access))
+            game_information = GameInformation(
+                cards_generator=CardsGenerator(),
+                players=[
+                    PlayerInformation(position=position, user_id=player.id)
+                    for position, player in enumerate(game.players)
+                ],
+            )
 
             await state.set_state(GameState.game_in_progress)
             await bot.send_message(chat_id=chat_id, text="The game is starting, get ready")
