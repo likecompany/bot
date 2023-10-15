@@ -8,14 +8,13 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
 from aiogram.types import CallbackQuery, Message
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from likeinterface import Interface
-from likeinterface.enums import Round
+from likeinterface import Interface, types
 from likeinterface.methods import AddGame, DeleteGame, GetBalance, GetGame
 from likeinterface.methods.set_balance import SetBalance
-from likeinterface.types import Game
 
 from callback_data import CardsCallbackData
 from core.game import core
+from enums import Round
 from filters import IsOwner, SessionFilter, SettingsFilter, UserInGame
 from keyboards import cards_inline_keyboard_builder
 from schemas import Session, Settings
@@ -96,16 +95,16 @@ async def delete_game_handler(
     message: Message,
     state: FSMContext,
     interface: Interface,
-    game: Game,
-    game_access: str,
+    user: types.User,
+    session: Session,
 ) -> None:
-    await interface.request(method=DeleteGame(access=game_access))
+    await interface.request(method=DeleteGame(access=session.access))
 
     if await state.get_state() == GameState.game_in_chat.state:
-        for player in game.players:
+        for player in session.game.players:
             balance = await interface.request(method=GetBalance(user_id=player.id))
             await interface.request(
-                method=SetBalance(user_id=balance.user.id, balance=balance.balance + player.stack)
+                method=SetBalance(user_id=user.id, balance=balance.balance + player.stack)
             )
 
     await state.set_state(GameState.no_state)
