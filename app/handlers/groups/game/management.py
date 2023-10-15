@@ -230,6 +230,8 @@ async def core(
         )
         await bot.send_message(chat_id=chat_id, text=text)
 
+        game_information.last_known_round = game.round
+
     if game.round != Round.PREFLOP.value and game_information.is_started:
         if not game_information.board:
             game_information.board = game_information.cards_generator.deal(n=board_size)
