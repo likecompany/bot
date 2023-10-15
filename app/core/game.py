@@ -157,6 +157,7 @@ async def start_game(
                 )
                 for player in session.game.players
             ]
+
     return None
 
 
@@ -185,6 +186,7 @@ async def round_message(
             )
             return None
         return None
+
     return None
 
 
@@ -217,6 +219,7 @@ async def deal_cards(
         session.cards.reset()
         session.board.clear()
         return None
+
     return None
 
 
@@ -259,6 +262,7 @@ async def current_player_message(
             for action in session.actions
         ),
     )
+
     return None
 
 
@@ -268,7 +272,7 @@ async def auto_execute_action(
     interface: Interface,
     session: Session,
 ) -> None:
-    if session.started or session.game.round == Round.SHOWDOWN.value:
+    if not session.started or session.game.round == Round.SHOWDOWN.value:
         return logger.info("(chat_id=%s) Nothing to do in the auto action" % chat_id)
 
     if (player := session.players[session.game.current]) and not player.player.is_left:
@@ -338,4 +342,5 @@ async def core(
     await auto_execute_action(bot=bot, chat_id=chat_id, interface=interface, session=session)
 
     await state.update_data(**session.model_dump())
+
     return None
