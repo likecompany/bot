@@ -332,6 +332,7 @@ async def core(
             return await bot.send_message(chat_id=chat_id, text="Game start failed")
 
         game_information.ready_to_start = False
+        game_information.is_started = True
         game_information.start_at = None
 
         await state.set_state(GameState.game_in_progress)
