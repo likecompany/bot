@@ -190,7 +190,7 @@ async def cards_callback_query_handler(
             show_alert=True,
         )
     else:
-        SLICE = 1 + game.round if Round.FLOP.value <= game.round <= Round.RIVER.value else 4
+        SLICE = 2 + game.round if Round.FLOP.value <= game.round <= Round.RIVER.value else 4
         await callback_query.answer(
             text=" ".join(card.as_string_pretty() for card in game_information.board[:SLICE])
             if game_information.board
@@ -222,7 +222,11 @@ async def core(
 
     game_information = GameInformation.model_validate(data)
 
-    if game_information.last_known_round != game.round and game_information.is_started:
+    if (
+        game_information.last_known_round != game.round
+        and game.round != Round.SHOWDOWN.value
+        and game_information.is_started
+    ):
         text = await get_round_text(
             interface=interface,
             game=game,
@@ -244,7 +248,7 @@ async def core(
         try:
             cards = Cards(
                 board=str().join(map(str, game_information.board)),
-                hands=[str().join(map(str, player.cards) for player in game_information.players)],
+                hands=[str().join(map(str, player.cards)) for player in game_information.players],
             )
         except (
             ValidationError,
@@ -312,6 +316,7 @@ async def core(
         await bot.send_message(
             chat_id=chat_id, text="Game launch is cancelled, not enough players"
         )
+        game_information.start_at = None
         game_information.ready_to_start = False
 
     if game_information.ready_to_start and not game_information.start_at:
