@@ -2,54 +2,25 @@ from __future__ import annotations
 
 from aiogram import Router
 from aiogram.filters import Command, or_f
-from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
-from aiogram.types import CallbackQuery, InlineKeyboardButton, Message
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import CallbackQuery, Message
+from pydantic import ValidationError
 
+from callback_data import SettingsCallbackData
 from exc import InvalidValueError
-from filters import Owner, Settings, SettingsFilter
+from filters import IsOwner, SettingsFilter
+from keyboards import settings_inline_keyboard_builder
+from schemas import Settings
 from states import GameState
 
 router = Router()
 
 
-class SettingsCallbackData(CallbackData, prefix="settings"):
-    attr: str
-    text: str
-    show: bool = False
-
-
-def get_settings_button(attr: str, text: str, show: bool = True) -> InlineKeyboardButton:
-    return InlineKeyboardButton(
-        text=text,
-        callback_data=SettingsCallbackData(
-            attr=attr,
-            text=text,
-            show=show,
-        ).pack(),
-    )
-
-
-def settings_inline_keyboard_builder() -> InlineKeyboardBuilder:
-    builder = InlineKeyboardBuilder()
-    builder.row(
-        get_settings_button(attr="small_blind_bet", text="Small Blind"),
-        get_settings_button(attr="small_blind_bet", text="Edit", show=False),
-    )
-    builder.row(
-        get_settings_button(attr="big_blind_multiplication", text="Big Blind Multiplication"),
-        get_settings_button(attr="big_blind_multiplication", text="Edit", show=False),
-    )
-
-    return builder
-
-
 @router.message(
     Command(commands="settings"),
     or_f(default_state, GameState.no_state),
-    Owner(),
+    IsOwner(),
 )
 async def settings_command_handler(message: Message) -> None:
     await message.answer(
@@ -60,8 +31,8 @@ async def settings_command_handler(message: Message) -> None:
 
 @router.message(
     GameState.update_settings,
-    Owner(),
     SettingsFilter(),
+    IsOwner(),
 )
 async def update_state_handler(
     message: Message,
@@ -71,24 +42,20 @@ async def update_state_handler(
     data = await state.get_data()
 
     try:
-        new_setting = int(message.text)
-    except ValueError:
+        setattr(settings, data.pop("attr"), int(message.text))
+    except ValidationError:
         raise InvalidValueError("Value must be integer")
-    else:
-        if new_setting <= 0:
-            raise InvalidValueError("Value must be greater than zero")
 
-    setattr(settings, data.pop("attr"), new_setting)
     await state.update_data(**settings.model_dump())
     await state.set_state(GameState.no_state)
-    await message.answer(text="Value is updated!")
+    await message.answer(text="Setting is updated!")
 
 
 @router.callback_query(
     SettingsCallbackData.filter(),
     GameState.no_state,
-    Owner(),
     SettingsFilter(),
+    IsOwner(),
 )
 async def settings_callback_query_handler(
     callback_query: CallbackQuery,
@@ -98,8 +65,7 @@ async def settings_callback_query_handler(
 ) -> None:
     if callback_data.show:
         await callback_query.answer(
-            text=f"{callback_data.text}: {getattr(settings, callback_data.attr)}",
-            show_alert=True,
+            text=f"{callback_data.text}: {getattr(settings, callback_data.attr)}", show_alert=True
         )
     else:
         await callback_query.message.answer(text="Enter new value")

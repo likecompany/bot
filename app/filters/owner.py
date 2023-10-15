@@ -7,7 +7,7 @@ from aiogram.filters import Filter
 from aiogram.types import Chat, TelegramObject, User
 
 
-class Owner(Filter):
+class IsOwner(Filter):
     async def __call__(
         self, event: TelegramObject, event_from_user: Optional[User], event_chat: Optional[Chat]
     ) -> bool:

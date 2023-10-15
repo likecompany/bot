@@ -50,11 +50,9 @@ async def create_bot() -> Bot:
                 BotCommand(
                     command="/settings", description="⚙️ Game Create Settings (Owner Only)"
                 ),
-                BotCommand(command="/cards", description="🃏 Get Game Cards"),
                 BotCommand(command="/join", description="👨‍🦲 Join To Game"),
                 BotCommand(command="/exit", description="👨‍🦲 Exit From Game"),
                 BotCommand(command="/cards", description="🃏 Get Cards"),
-                BotCommand(command="/actions", description="ℹ️ Possible Actions"),
                 BotCommand(command="/fold", description="❗️ Poker Fold"),
                 BotCommand(command="/check", description="❗️ Poker Check"),
                 BotCommand(command="/call", description="❗️ Poker Call"),

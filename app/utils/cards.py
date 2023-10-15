@@ -26,7 +26,7 @@ class Card(BaseModel):
         return self.rank.value + self.suit.value
 
 
-class CardsGenerator(BaseModel):
+class Cards(BaseModel):
     cards: List[Card] = Field(default_factory=list)
     last: int = 0
 
@@ -41,3 +41,6 @@ class CardsGenerator(BaseModel):
         self.last += n
 
         return cards  # noqa: RET504
+
+    def reset(self) -> None:
+        self.last = 0

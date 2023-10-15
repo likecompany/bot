@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Union
+from typing import Any, Dict, Union
 
 from aiogram.filters import Filter
 from aiogram.types import TelegramObject
-from likeinterface.types import Game, User
+from likeinterface.types import User
 
-if TYPE_CHECKING:
-    from .game import GameInformation
+from schemas import Session
 
 
 class UserInGame(Filter):
@@ -15,26 +14,24 @@ class UserInGame(Filter):
         self,
         event: TelegramObject,
         user: User,
-        game_information: GameInformation,
+        session: Session,
     ) -> Union[bool, Dict[str, Any]]:
-        for player in game_information.players:
-            if player.user_id == user.id:
-                return {"player": player}
+        for position, player in enumerate(session.game.players):
+            if player.id == user.id:
+                return {"position": position}
 
         return False
 
 
 class UserIsCurrent(Filter):
-    async def __call__(self, event: TelegramObject, user: User, game: Game) -> bool:
-        return game.players[game.current].id == user.id
+    async def __call__(self, event: TelegramObject, user: User, session: Session) -> bool:
+        return session.game.players[session.game.current] == user.id
 
 
 class UserIsLeft(Filter):
-    async def __call__(
-        self, event: TelegramObject, user: User, game_information: GameInformation
-    ) -> bool:
-        for player in game_information.players:
-            if player.user_id == user.id:
-                return False
+    async def __call__(self, event: TelegramObject, user: User, session: Session) -> bool:
+        for player in session.game.players:
+            if player.is_left and player.id == user.id:
+                return True
 
-        return True
+        return False

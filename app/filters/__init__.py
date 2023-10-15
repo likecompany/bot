@@ -1,15 +1,12 @@
-from .game import GameFilter, GameInformation, PlayerInformation
-from .owner import Owner
-from .settings import Settings, SettingsFilter
+from .owner import IsOwner
+from .session import SessionFilter
+from .settings import SettingsFilter
 from .user import UserInGame, UserIsCurrent, UserIsLeft
 
 __all__ = (
-    "GameFilter",
-    "GameInformation",
-    "Settings",
+    "IsOwner",
+    "SessionFilter",
     "SettingsFilter",
-    "Owner",
-    "PlayerInformation",
     "UserInGame",
     "UserIsCurrent",
     "UserIsLeft",
