@@ -1,17 +1,22 @@
 from __future__ import annotations
 
+from enum import Enum
+
 from likeinterface import enums
 
 
-class State(enums.State):
-    def to_string(self) -> str:
-        if self == State.INIT:
-            return "action not posted"
-        if self == State.OUT:
-            return "out from game"
-        if self == State.ALIVE:
-            return "alive"
-        if self == State.ALLIN:
-            return "allin"
+class State(Enum):
+    INIT = enums.State.INIT.value
+    OUT = enums.State.OUT.value
+    ALIVE = enums.State.ALIVE.value
+    ALLIN = enums.State.ALLIN.value
 
-        return "unknown"
+    def to_string(self) -> str:
+        if self.value == enums.State.INIT.value:
+            return "action not posted"
+        if self.value == enums.State.OUT.value:
+            return "out from game"
+        if self.value == enums.State.ALIVE.value:
+            return "alive"
+
+        return "allin"

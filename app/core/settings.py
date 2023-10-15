@@ -12,6 +12,14 @@ class BaseSettings(PydanticBaseSettings):
     )
 
 
+class LoggingSettings(BaseSettings):
+    BOT_MAIN_LOGGER_NAME: str
+    LOGGING_LEVEL: str
+
+
+logging_settings = LoggingSettings()
+
+
 class BotSettings(BaseSettings):
     BOT_TOKEN: str
 
