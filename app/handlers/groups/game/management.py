@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-import textwrap
+import time
 from contextlib import suppress
 
 from aiogram import Bot, Router
@@ -30,7 +30,6 @@ from likeinterface.methods.set_balance import SetBalance
 from likeinterface.types import Cards, Game
 from pydantic import ValidationError
 
-from exc import AdjustError
 from filters import (
     GameFilter,
     GameInformation,
@@ -41,7 +40,8 @@ from filters import (
     UserInGame,
 )
 from states import GameState
-from utils.cards_generator import CardsGenerator
+from utils.cards import CardsGenerator
+from utils.round import get_round_text
 from utils.user import get_user_link
 
 router = Router()
@@ -59,8 +59,10 @@ class GameCardsCallbackData(CallbackData, prefix="gamecards"):
 )
 async def create_game_handler(
     message: Message,
+    bot: Bot,
     state: FSMContext,
     interface: Interface,
+    scheduler: AsyncIOScheduler,
     settings: Settings,
 ) -> None:
     sb_bet, bb_bet = settings.small_blind_bet, settings.small_blind_bet * 2
@@ -87,32 +89,7 @@ async def create_game_handler(
         f"Big Blind: {bb_bet}",
     )
 
-
-@router.message(
-    Command(commands="adjust"),
-    or_f(GameState.game_in_chat, GameState.game_finished),
-    GameFilter(),
-    Owner(),
-)
-async def adjust_game_handler(
-    message: Message,
-    bot: Bot,
-    state: FSMContext,
-    interface: Interface,
-    scheduler: AsyncIOScheduler,
-    game: Game,
-    game_access: str,
-) -> None:
-    try:
-        await interface.request(
-            method=AdjustGame(
-                access=game_access,
-                is_new_game=game.round == Round.SHOWDOWN,
-            )
-        )
-    except LikeInterfaceError:
-        raise AdjustError()
-
+    game = await interface.request(method=GetGame(access=game_access))
     game_information = GameInformation(
         cards_generator=CardsGenerator(),
         players=[
@@ -121,10 +98,7 @@ async def adjust_game_handler(
         ],
     )
 
-    await state.set_state(GameState.game_in_progress)
     await state.update_data(**game_information.model_dump())
-
-    await message.answer(text="Game was started")
 
     scheduler.add_job(
         core,
@@ -170,49 +144,6 @@ async def delete_game_handler(
     await message.answer(text="Game was deleted")
 
 
-@router.message(
-    Command(commands="round"),
-    or_f(GameState.game_in_progress, GameState.game_finished),
-    GameFilter(),
-)
-async def round_handler(
-    message: Message,
-    interface: Interface,
-    game: Game,
-    game_information: GameInformation,
-) -> None:
-    def player_state_to_string(state: int) -> str:
-        state = State(state)
-
-        if state == State.INIT:
-            return "action not posted"
-        if state == State.OUT:
-            return "out from game"
-        if state == State.ALIVE:
-            return "alive"
-        if state == State.ALLIN:
-            return "allin"
-
-        return "unknown"
-
-    await message.answer(
-        text=f"Round - {game.round}\n\n"
-        f"Current: {await get_user_link(interface=interface, user_id=game.players[game.current].id)}\n\n"
-        f"Players:\n"
-        + "\n\n".join(
-            [
-                f"{await get_user_link(interface=interface, user_id=player.user_id)}, "
-                f"is left - {game.players[player.position].is_left}, "
-                f"chips - {game.players[player.position].behind}, "
-                f"round bet - {game.players[player.position].round_bet}, "
-                f"game bet - {game.players[player.position].front}, "
-                f"state - {player_state_to_string(game.players[player.position].state)}"
-                for player in game_information.players
-            ]
-        )
-    )
-
-
 def gamecards_inline_keyboard_builder() -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     builder.row(
@@ -253,14 +184,16 @@ async def cards_callback_query_handler(
 ) -> None:
     if callback_data.view_hand:
         await callback_query.answer(
-            text=player.cards if player.cards else "There is no cards yet",
+            text=" ".join(card.as_string_pretty() for card in player.cards)
+            if player.cards
+            else "There is no cards yet",
             show_alert=True,
         )
     else:
-        SLICE = (2 + game.round) if Round.FLOP.value <= game.round <= Round.RIVER.value else 5
+        SLICE = 1 + game.round if Round.FLOP.value <= game.round <= Round.RIVER.value else 4
         await callback_query.answer(
-            text=game_information.board[0 : (SLICE * 2)]
-            if game_information.board or game.round == Round.PREFLOP
+            text=" ".join(card.as_string_pretty() for card in game_information.board[:SLICE])
+            if game_information.board
             else "There is no board cards yet",
             show_alert=True,
         )
@@ -274,6 +207,9 @@ async def core(
     state: FSMContext,
     interface: Interface,
     game_access: str,
+    seconds_to_start: int = 15,
+    min_players: int = 2,
+    max_players: int = 6,
     hand_size: int = 2,
     board_size: int = 5,
 ) -> None:
@@ -286,23 +222,32 @@ async def core(
 
     game_information = GameInformation.model_validate(data)
 
-    if game.round != Round.PREFLOP.value:
+    if game_information.last_known_round != game.round and game_information.is_started:
+        text = await get_round_text(
+            interface=interface,
+            game=game,
+            game_information=game_information,
+        )
+        await bot.send_message(chat_id=chat_id, text=text)
+
+    if game.round != Round.PREFLOP.value and game_information.is_started:
         if not game_information.board:
-            game_information.board = str().join(
-                game_information.cards_generator.deal(n=board_size)
-            )
+            game_information.board = game_information.cards_generator.deal(n=board_size)
 
         for player in game_information.players:
             if not player.cards and game.players[player.position].state != State.OUT.value:
-                player.cards = str().join(game_information.cards_generator.deal(n=hand_size))
+                player.cards = game_information.cards_generator.deal(n=hand_size)
 
-    if game.round == Round.SHOWDOWN.value:
+    if game.round == Round.SHOWDOWN.value and game_information.is_started:
         try:
             cards = Cards(
-                board=textwrap.fill(game_information.board, 2).split("\n"),
-                hands=[player.cards for player in game_information.players],
+                board=str().join(str(card) for card in game.board),
+                hands=[str(player.cards) for player in game_information.players],
             )
-        except ValidationError:
+        except (
+            ValidationError,
+            ValueError,
+        ):
             cards = text = None
         else:
             winners = await interface.request(method=GetEvaluationResult(cards=cards))
@@ -326,7 +271,7 @@ async def core(
                 )
             )
 
-        if text:
+        if cards and text:
             await bot.send_message(chat_id=chat_id, text=f"Winners:\n{text}")
         else:
             await bot.send_message(
@@ -336,15 +281,15 @@ async def core(
                 if player.state in [State.ALIVE, State.ALLIN]:
                     await bot.send_message(
                         chat_id=chat_id,
-                        text=f"Player - {await get_user_link(interface)} is winner",
+                        text=f"Player - {await get_user_link(interface=interface, user_id=player.id)} is winner",
                     )
 
         await bot.send_message(chat_id=chat_id, text="Game was ended")
         await state.set_state(GameState.game_finished)
 
-        return scheduler.remove_job(job_id=job_id)
+        game_information.is_started = False
 
-    if game.players[game.current].is_left:
+    if game.players[game.current].is_left and game_information.is_started:
         possible_actions = await interface.request(method=GetPossibleActions(access=game_access))
 
         to_execute = None
@@ -356,6 +301,39 @@ async def core(
 
         with suppress(Exception):
             await interface.request(method=ExecuteAction(access=game_access, action=to_execute))
+
+    players = len(game_information.players)
+    if min_players <= players <= max_players and not game_information.is_started:
+        game_information.ready_to_start = True
+
+    if game_information.ready_to_start and players < min_players:
+        await bot.send_message(
+            chat_id=chat_id, text="Game launch is cancelled, not enough players"
+        )
+        game_information.ready_to_start = False
+
+    if game_information.ready_to_start:
+        await bot.send_message(
+            chat_id=chat_id, text=f"The game will start in {seconds_to_start} seconds"
+        )
+        game_information.start_at = time.time() + seconds_to_start
+
+    if game_information.ready_to_start and game_information.start_at <= time.time():
+        try:
+            await interface.request(
+                method=AdjustGame(
+                    access=game_access,
+                    is_new_game=game.round == Round.SHOWDOWN,
+                )
+            )
+        except LikeInterfaceError:
+            return await bot.send_message(chat_id=chat_id, text="Game start failed")
+
+        game_information.ready_to_start = False
+        game_information.start_at = None
+
+        await state.set_state(GameState.game_in_progress)
+        await bot.send_message(chat_id=chat_id, text="The game is starting, get ready")
 
     await state.update_data(**game_information.model_dump())
 

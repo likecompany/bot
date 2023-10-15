@@ -10,19 +10,23 @@ from likeinterface.exceptions import LikeInterfaceError
 from likeinterface.methods import GetGame
 from pydantic import BaseModel, Field
 
-from utils.cards_generator import CardsGenerator
+from utils.cards import Card, CardsGenerator
 
 
 class PlayerInformation(BaseModel):
     position: int
     user_id: int
-    cards: Optional[str] = None
+    cards: Optional[List[Card]] = None
 
 
 class GameInformation(BaseModel):
     cards_generator: CardsGenerator = CardsGenerator()
-    board: Optional[str] = None
+    board: Optional[List[Card]] = None
     players: List[PlayerInformation] = Field(default_factory=list)
+    ready_to_start: bool = False
+    is_started: bool = False
+    last_known_round: Optional[int] = None
+    start_at: Optional[int] = None
 
 
 class GameFilter(Filter):

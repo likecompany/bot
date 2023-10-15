@@ -19,7 +19,7 @@ router = Router()
 
 @router.message(
     Command(commands="join"),
-    GameState.game_in_chat,
+    (GameState.game_in_chat, GameState.game_finished),
     GameFilter(),
     invert_f(UserInGame()),
 )

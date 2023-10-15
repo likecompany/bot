@@ -46,12 +46,10 @@ async def create_bot() -> Bot:
         await bot.set_my_commands(
             commands=[
                 BotCommand(command="/create", description="🃏 Create New Game (Owner Only)"),
-                BotCommand(command="/adjust", description="🃏 Start Game (Owner Only)"),
                 BotCommand(command="/delete", description="🃏 Delete Game (Owner Only)"),
                 BotCommand(
                     command="/settings", description="⚙️ Game Create Settings (Owner Only)"
                 ),
-                BotCommand(command="/round", description="ℹ️ Get Round Information"),
                 BotCommand(command="/cards", description="🃏 Get Game Cards"),
                 BotCommand(command="/join", description="👨‍🦲 Join To Game"),
                 BotCommand(command="/exit", description="👨‍🦲 Exit From Game"),
@@ -72,6 +70,6 @@ async def create_bot() -> Bot:
         )
         await bot.set_my_short_description(short_description="Play Texas Holdem Poker Now!")
 
-        await bot.set_my_name(name="Game")
+        await bot.set_my_name(name="Texas Holdem Poker")
 
     return bot
