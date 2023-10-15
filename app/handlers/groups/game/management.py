@@ -312,7 +312,7 @@ async def core(
         )
         game_information.ready_to_start = False
 
-    if game_information.ready_to_start:
+    if game_information.ready_to_start and not game_information.start_at:
         await bot.send_message(
             chat_id=chat_id, text=f"The game will start in {seconds_to_start} seconds"
         )
