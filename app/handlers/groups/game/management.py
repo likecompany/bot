@@ -289,7 +289,7 @@ async def core(
 
         game_information.is_started = False
 
-    if game.players[game.current].is_left and game_information.is_started:
+    if game_information.is_started and game.players[game.current].is_left:
         possible_actions = await interface.request(method=GetPossibleActions(access=game_access))
 
         to_execute = None
