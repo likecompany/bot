@@ -168,7 +168,7 @@ async def round_message(
     if not session.started or session.game.round == Round.SHOWDOWN.value:
         return logger.info("(chat_id=%s) Game is in invalid state, skipping..." % chat_id)
 
-    if not session.last_known_round != session.game.round:
+    if session.last_known_round != session.game.round:
         session.last_known_round = session.game.round
         await bot.send_message(
             chat_id=chat_id,
@@ -199,12 +199,12 @@ async def deal_cards(
     if not session.started:
         return logger.info("(chat_id=%s) Game is in invalid state, skipping..." % chat_id)
 
-    if session.game.round == Round.PREFLOP:
+    if session.game.round == Round.PREFLOP.value:
         for player in session.players:
             player.cards = session.cards.deal(n=hand_size)
 
         await bot.send_message(chat_id=chat_id, text="The game cards have been dealt")
-    if session.game.round != Round.PREFLOP:
+    if session.game.round != Round.PREFLOP.value:
         if not session.board:
             session.board = session.cards.deal(n=board_size)
 
@@ -229,7 +229,7 @@ async def current_player_message(
         return logger.info("(chat_id=%s) Game is in invalid state, skipping..." % chat_id)
 
     player = session.players[session.game.current]
-    if player.is_left:
+    if player.player.is_left:
         return await bot.send_message(
             chat_id=chat_id, text=f"{player.mention_html()} is left, auto action will be activated"
         )
@@ -268,10 +268,10 @@ async def auto_execute_action(
     interface: Interface,
     session: Session,
 ) -> None:
-    if session.started or session.game.round == Round.SHOWDOWN:
+    if session.started or session.game.round == Round.SHOWDOWN.value:
         return logger.info("(chat_id=%s) Nothing to do in the auto action" % chat_id)
 
-    if (player := session.players[session.game.current]) and player.player.is_left:
+    if (player := session.players[session.game.current]) and not player.player.is_left:
         return logger.info(
             "(chat_id=%s) Player [%s] is not left, skipping..." % (chat_id, player.user.id)
         )
@@ -334,6 +334,7 @@ async def core(
     await deal_cards(
         bot=bot, chat_id=chat_id, session=session, reset=session.game.round == Round.SHOWDOWN.value
     )
+    await current_player_message(bot=bot, chat_id=chat_id, session=session)
     await auto_execute_action(bot=bot, chat_id=chat_id, interface=interface, session=session)
 
     await state.update_data(**session.model_dump())
