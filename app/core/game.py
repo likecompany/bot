@@ -242,7 +242,7 @@ async def current_player_message(
         )
 
     if not session.current_player_sent:
-        session.current_player_sent = False
+        session.current_player_sent = True
 
         await bot.send_message(
             chat_id=chat_id,
