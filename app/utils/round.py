@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from likeinterface import Interface
-from likeinterface.enums import Position, Round
+from likeinterface.enums import Position, Round, State
 from likeinterface.types import Game
 
 from filters import GameInformation
@@ -40,7 +40,7 @@ async def get_round_text(
                 f"chips - {game.players[player.position].behind}, "
                 f"round bet - {game.players[player.position].round_bet}, "
                 f"game bet - {game.players[player.position].front}, "
-                f"state - {player_state_to_string(game.players[player.position].state)}"
+                f"state - {player_state_to_string(State(game.players[player.position].state))}"
                 for player in game_information.players
             ]
         )

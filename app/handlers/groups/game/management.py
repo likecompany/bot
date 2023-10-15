@@ -247,13 +247,10 @@ async def core(
     if game.round == Round.SHOWDOWN.value and game_information.is_started:
         try:
             cards = Cards(
-                board=str().join(map(str, game_information.board)),
+                board=map(str, game_information.board),
                 hands=[str().join(map(str, player.cards)) for player in game_information.players],
             )
-        except (
-            ValidationError,
-            ValueError,
-        ):
+        except ValidationError:
             cards = text = None
         else:
             winners = await interface.request(method=GetEvaluationResult(cards=cards))
@@ -316,8 +313,9 @@ async def core(
         await bot.send_message(
             chat_id=chat_id, text="Game launch is cancelled, not enough players"
         )
-        game_information.start_at = None
+
         game_information.ready_to_start = False
+        game_information.start_at = None
 
     if game_information.ready_to_start and not game_information.start_at:
         await bot.send_message(
