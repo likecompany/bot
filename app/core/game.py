@@ -203,7 +203,7 @@ async def deal_cards(
 
     if session.game.round == Round.PREFLOP.value:
         for player in session.players:
-            player.cards = session.cards.deal(n=hand_size)
+            player.hand = session.cards.deal(n=hand_size)
 
         await bot.send_message(chat_id=chat_id, text="The game cards have been dealt")
     if session.game.round != Round.PREFLOP.value:
@@ -213,7 +213,7 @@ async def deal_cards(
     if reset:
         logger.info(
             "(chat_id=%s) Cards: BOARD %s, HANDS %s"
-            % (chat_id, session.board, [player.cards for player in session.players])
+            % (chat_id, session.board, [player.hand for player in session.players])
         )
 
         session.cards.reset()
