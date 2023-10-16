@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  fsm:
+    image: redis:latest
+    volumes:
+      - fsm_data:/data
+    command: redis-server --port ${REDIS_PORT} --save 20 1 --loglevel warning
+    env_file:
+      - ${PWD}/.env
+    expose:
+      - ${FSM_PORT}
+    networks:
+      - like_network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+volumes:
+  fsm_data:
