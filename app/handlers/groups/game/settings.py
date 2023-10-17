@@ -52,7 +52,7 @@ async def update_state_handler(
     data = await state.get_data()
 
     try:
-        settings = settings.model_validate({data.pop("attr"): message.text})
+        settings = settings.model_validate({data.pop("attr"): message.text, **data})
     except ValidationError:
         raise InvalidValueError("Invalid value")
 

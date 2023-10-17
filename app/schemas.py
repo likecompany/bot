@@ -14,7 +14,7 @@ class Settings(BaseModel):
     min_players: int = Field(2, ge=2, le=6)
     max_players: int = Field(6, ge=2, le=6)
     start_time: int = Field(15, gt=0)
-    small_blind_bet: int = Field(500, gt=0)
+    small_blind: int = Field(500, gt=0)
     big_blind_multiplication: int = Field(15, gt=0)
 
     @model_validator(mode="after")
@@ -25,9 +25,9 @@ class Settings(BaseModel):
         return self
 
 
-class Player(BaseModel):
+class Player(types.Player):
+    position: int
     user: types.User
-    player: types.Player
     hand: List[Card] = Field(default_factory=list)
 
     def url(self) -> str:
@@ -45,9 +45,5 @@ class Session(BaseModel):
     board: List[Card] = Field(default_factory=list)
     players: List[Player] = Field(default_factory=list)
     started: bool = False
-    last_known_round: Optional[int] = None
     ready_to_start: bool = False
     start_at: Optional[float] = None
-    last_known_current_player: Optional[int] = None
-    current_player_sent: bool = False
-    action_sent: bool = False

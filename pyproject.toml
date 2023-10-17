@@ -33,10 +33,7 @@ select = [
     "RET",
 ]
 ignore = ["E501"]
-exclude = [
-    ".git",
-    ".venv",
-]
+exclude = [".git", ".venv"]
 force-exclude = true
 
 [tool.black]

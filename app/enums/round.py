@@ -13,13 +13,13 @@ class Round(Enum):
     SHOWDOWN = enums.Round.SHOWDOWN.value
 
     def to_string(self) -> str:
-        if self.value == enums.Round.PREFLOP.value:
+        if self == Round.PREFLOP:
             return "preflop"
-        if self.value == enums.Round.FLOP.value:
+        if self == Round.FLOP:
             return "flop"
-        if self.value == enums.Round.TURN.value:
+        if self == Round.TURN:
             return "turn"
-        if self.value == enums.Round.RIVER.value:
+        if self == Round.RIVER:
             return "river"
 
         return "showdown"

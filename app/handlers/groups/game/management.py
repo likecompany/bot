@@ -42,19 +42,19 @@ async def create_game_handler(
     await interface.request(
         method=AddGame(
             access=access,
-            sb_bet=settings.small_blind_bet,
-            bb_bet=settings.small_blind_bet * 2,
+            sb_bet=settings.small_blind,
+            bb_bet=settings.small_blind * 2,
             bb_mult=settings.big_blind_multiplication,
-            min_raise=settings.small_blind_bet * 2,
+            min_raise=settings.small_blind * 2,
         )
     )
 
     await state.set_state(GameState.game_in_chat)
     await message.answer(
         text=f"Available new game\n\n"
-        f"Stacksize: {settings.small_blind_bet * 2 * settings.big_blind_multiplication}\n\n"
-        f"Small Blind: {settings.small_blind_bet}\n"
-        f"Big Blind: {settings.small_blind_bet * 2}",
+        f"Stacksize: {settings.small_blind * 2 * settings.big_blind_multiplication}\n\n"
+        f"Small Blind: {settings.small_blind}\n"
+        f"Big Blind: {settings.small_blind * 2}",
     )
 
     game = await interface.request(method=GetGame(access=access))
@@ -94,7 +94,6 @@ async def delete_game_handler(
     message: Message,
     state: FSMContext,
     interface: Interface,
-    user: types.User,
     session: Session,
 ) -> None:
     await interface.request(method=DeleteGame(access=session.access))

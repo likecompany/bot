@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+from typing import List
+
 from aiogram import Router
 from aiogram.filters import Command, invert_f, or_f
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, InlineQuery, Message
 from likeinterface import Interface, types
 from likeinterface.exceptions import LikeInterfaceError
 from likeinterface.methods import JoinToGame, LeftFromGame
 from likeinterface.methods.set_balance import SetBalance
 
+from enums import Position, State
 from exc import JoinError, NotEnoughBalanceError
 from filters import SessionFilter, UserInGame
 from schemas import Session
@@ -77,3 +80,31 @@ async def exit_from_game(
                     )
                 )
             await message.reply(text="You've exit of the game")
+
+
+def players_text(session: Session) -> List[str]:
+    text = "{position} {username} {state} - 💲{chips}, bet 💲{round_bet}"
+
+    return [
+        text.format(
+            position=Position(player.position).to_string_pretty(),
+            username=player.user.username,
+            state=State(player.state).to_string_pretty(),
+            chips=player.behind,
+            bet=player.round_bet,
+        )
+        for player in session.players
+    ]
+
+
+@router.callback_query(
+    SessionFilter(),
+)
+async def game_players_handler(
+    callback_query: CallbackQuery,
+    session: Session,
+) -> None:
+    await callback_query.answer(
+        text="\n".join(players_text(session=session)),
+        show_alert=True,
+    )

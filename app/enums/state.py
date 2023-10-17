@@ -11,12 +11,12 @@ class State(Enum):
     ALIVE = enums.State.ALIVE.value
     ALLIN = enums.State.ALLIN.value
 
-    def to_string(self) -> str:
-        if self.value == enums.State.INIT.value:
-            return "action not posted"
-        if self.value == enums.State.OUT.value:
-            return "out from game"
-        if self.value == enums.State.ALIVE.value:
-            return "alive"
+    def to_string_pretty(self) -> str:
+        if self == State.INIT:
+            return "🆓"
+        if self.value == State.OUT:
+            return "⛔️"
+        if self.value == State.ALIVE:
+            return "✅"
 
-        return "allin"
+        return "🔪"

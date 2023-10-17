@@ -14,15 +14,15 @@ class Action(Enum):
     ALLIN = enums.Action.ALLIN.value
 
     def to_string(self) -> str:
-        if self.value == enums.Action.CHECK.value:
+        if self == Action.CHECK:
             return "check"
-        if self.value == enums.Action.FOLD.value:
+        if self == Action.FOLD:
             return "fold"
-        if self.value == enums.Action.CALL.value:
+        if self == Action.CALL:
             return "call"
-        if self.value == enums.Action.BET.value:
+        if self == Action.BET:
             return "bet"
-        if self.value == enums.Action.RAISE.value:
+        if self == Action.RAISE:
             return "raise"
 
         return "allin"
