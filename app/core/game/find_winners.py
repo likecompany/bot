@@ -55,8 +55,6 @@ async def find_winners(
 
     cards = get_cards(session=session)
 
-    await interface.request(method=SetNextGame(access=session.access, cards=cards))
-
     winners = await get_winners_text(
         interface=interface,
         session=session,
@@ -68,6 +66,8 @@ async def find_winners(
         if winners
         else f"There is only one winner - {find_if(collection=session.players, condition=lambda x: x.state == State.INIT.value).mention_html()}"
     )
+
+    await interface.request(method=SetNextGame(access=session.access, cards=cards))
 
     session.started = False
 
