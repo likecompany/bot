@@ -15,9 +15,9 @@ from utils.find_if import find_if
 def get_cards(session: Session) -> Optional[types.Cards]:
     if (
         count_if(
-            collection=session.players, condition=lambda element: element.state == State.INIT.value
+            collection=session.players, condition=lambda element: element.state == State.OUT.value
         )
-        == 1
+        == len(session.players) - 1
     ):
         return None
 

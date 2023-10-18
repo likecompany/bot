@@ -95,7 +95,7 @@ async def start_game(
         await bot.edit_message_text(
             inline_message_id=inline_message_id,
             text=start_text(settings=settings)
-            + f"The game will start in {session.start_at - current_time} seconds",
+            + f"\n\nThe game will start in {session.start_at - current_time} seconds",
         )
 
     return None
