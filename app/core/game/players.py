@@ -12,9 +12,9 @@ async def update_players(
     interface: Interface,
     session: Session,
 ) -> None:
-    if not session.started:
+    if session.started:
         return logger.info(
-            "(inline_message_id=%s) Game not started, skipping..." % inline_message_id
+            "(inline_message_id=%s) Game started, skipping..." % inline_message_id
         )
 
     session.players = [
