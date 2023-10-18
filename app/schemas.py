@@ -50,6 +50,5 @@ class Session(BaseModel):
     started: bool = False
     ready_to_start: bool = False
     start_at: Optional[float] = None
-    wait_for_action: bool = False
     action_end_at: Optional[float] = None
     winners: Optional[str] = None

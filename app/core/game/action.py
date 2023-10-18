@@ -37,11 +37,7 @@ async def auto_execute_action(
     session: Session,
     settings: Settings,
 ) -> None:
-    if (
-        not session.started
-        or session.game.round == Round.SHOWDOWN.value
-        or not session.wait_for_action
-    ):
+    if not session.started or session.game.round == Round.SHOWDOWN.value:
         return logger.info(
             "(inline_message_id=%s) Nothing to do in the auto action" % inline_message_id
         )
@@ -74,5 +70,7 @@ async def auto_execute_action(
 
         await interface.request(method=ExecuteAction(access=session.access, action=execute))
         logger.info("(inline_message_id=%s) Player auto action completed" % inline_message_id)
+
+        session.action_end_at = None
 
     return None

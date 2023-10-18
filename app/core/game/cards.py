@@ -43,6 +43,9 @@ async def deal_cards(
         session.cards.reset()
         session.board.clear()
 
+        for player in session.players:
+            player.hand.clear()
+
         return None
 
     return None
