@@ -18,11 +18,11 @@ def players_game_inline_keyboard_builder(redis_callback_data_key: str) -> Inline
     builder.row(
         InlineKeyboardButton(
             text="Join",
-            data=JoinCallbackData(redis_callback_data_key=redis_callback_data_key).pack(),
+            callback_data=JoinCallbackData(redis_callback_data_key=redis_callback_data_key).pack(),
         ),
         InlineKeyboardButton(
             text="Exit",
-            data=ExitCallbackData(redis_callback_data_key=redis_callback_data_key).pack(),
+            callback_data=ExitCallbackData(redis_callback_data_key=redis_callback_data_key).pack(),
         ),
     )
 
@@ -34,13 +34,17 @@ def game_inline_keyboard_builder(redis_callback_data_key: str) -> InlineKeyboard
     builder.row(
         InlineKeyboardButton(
             text="Actions",
-            data=ActionsCallbackData(redis_callback_data_key=redis_callback_data_key).pack(),
+            callback_data=ActionsCallbackData(
+                redis_callback_data_key=redis_callback_data_key
+            ).pack(),
         )
     )
     builder.row(
         InlineKeyboardButton(
             text="Players",
-            data=PlayersCallbackData(redis_callback_data_key=redis_callback_data_key).pack(),
+            callback_data=PlayersCallbackData(
+                redis_callback_data_key=redis_callback_data_key
+            ).pack(),
         )
     )
     builder.row(
@@ -67,7 +71,9 @@ def game_ended_inline_keyboard_builder(redis_callback_data_key: str) -> InlineKe
     builder.row(
         InlineKeyboardButton(
             text="Winners",
-            data=WinnersCallbackData(redis_callback_data_key=redis_callback_data_key).pack(),
+            callback_data=WinnersCallbackData(
+                redis_callback_data_key=redis_callback_data_key
+            ).pack(),
         )
     )
 
