@@ -26,4 +26,4 @@ class SessionFilter(Filter):
         if not (access := await redis.get(name=callback_data.redis_callback_data_key)):
             return False
 
-        return {"session": Session.model_dump_json(await redis.get(name=access))}
+        return {"session": Session.model_validate_json(await redis.get(name=access))}
