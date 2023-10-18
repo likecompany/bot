@@ -22,3 +22,13 @@ class PlayerInGame(Filter):
         )
 
         return False if not player else {"player": player}
+
+
+class PlayerIsCurrent(Filter):
+    async def __call__(
+        self,
+        event: TelegramObject,
+        user: User,
+        session: Session,
+    ) -> bool:
+        return session.players[session.game.current].id == user.id
