@@ -5,7 +5,7 @@ from typing import List, Optional
 from aiogram.utils import markdown
 from aiogram.utils.link import create_tg_link
 from likeinterface import types
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from utils.cards import Card, Cards
 
@@ -27,6 +27,8 @@ class Settings(BaseModel):
 
 
 class Player(types.Player):
+    model_config = ConfigDict(frozen=False)
+
     position: int
     user: types.User
     hand: List[Card] = Field(default_factory=list)
