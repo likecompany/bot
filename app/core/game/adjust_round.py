@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from contextlib import suppress
+
 from aiogram import Bot
+from aiogram.exceptions import TelegramBadRequest
 
 from keyboards import game_inline_keyboard_builder
 from logger import logger
@@ -20,12 +23,12 @@ async def adjust_round(
             "(inline_message_id=%s) Game is in invalid state, skipping..." % inline_message_id
         )
 
-    await bot.edit_message_text(
-        text=round_text(session=session),
-        inline_message_id=inline_message_id,
-        reply_markup=game_inline_keyboard_builder(
-            redis_callback_data_key=redis_callback_data_key
-        ).as_markup(),
-    )
-
-    return None
+    with suppress(TelegramBadRequest):
+        await bot.edit_message_text(
+            text=round_text(session=session),
+            inline_message_id=inline_message_id,
+            reply_markup=game_inline_keyboard_builder(
+                redis_callback_data_key=redis_callback_data_key
+            ).as_markup(),
+        )
+        return None

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import time
+from contextlib import suppress
 
 from aiogram import Bot
+from aiogram.exceptions import TelegramBadRequest
 from likeinterface import Interface
 from likeinterface.exceptions import LikeInterfaceError
 from likeinterface.methods import AdjustGame
@@ -41,13 +43,14 @@ async def start_game(
         session.ready_to_start = True
 
     if not session.ready_to_start:
-        await bot.edit_message_text(
-            inline_message_id=inline_message_id,
-            text=start_text(settings=settings),
-            reply_markup=players_game_inline_keyboard_builder(
-                redis_callback_data_key=redis_callback_data_key
-            ).as_markup(),
-        )
+        with suppress(TelegramBadRequest):
+            await bot.edit_message_text(
+                inline_message_id=inline_message_id,
+                text=start_text(settings=settings),
+                reply_markup=players_game_inline_keyboard_builder(
+                    redis_callback_data_key=redis_callback_data_key
+                ).as_markup(),
+            )
         session.start_at = None
 
         return logger.info(
@@ -57,10 +60,12 @@ async def start_game(
 
     if players < settings.min_players:
         if session.ready_to_start:
-            await bot.edit_message_text(
-                inline_message_id=inline_message_id,
-                text=start_text(settings=settings) + "Game doesn't start, not enough players...",
-            )
+            with suppress(TelegramBadRequest):
+                await bot.edit_message_text(
+                    inline_message_id=inline_message_id,
+                    text=start_text(settings=settings)
+                    + "Game doesn't start, not enough players...",
+                )
 
         session.ready_to_start = False
         session.start_at = None
@@ -86,10 +91,11 @@ async def start_game(
 
         return None
 
-    await bot.edit_message_text(
-        inline_message_id=inline_message_id,
-        text=start_text(settings=settings)
-        + f"The game will start in {session.start_at - current_time} seconds",
-    )
+    with suppress(TelegramBadRequest):
+        await bot.edit_message_text(
+            inline_message_id=inline_message_id,
+            text=start_text(settings=settings)
+            + f"The game will start in {session.start_at - current_time} seconds",
+        )
 
     return None
