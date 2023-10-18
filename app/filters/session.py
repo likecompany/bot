@@ -6,6 +6,8 @@ from aiogram.filters import Filter
 from aiogram.types import CallbackQuery
 from redis.asyncio.client import Redis
 
+from schemas import Session
+
 
 class CallbackDataProtocol(Protocol):
     redis_callback_data_key: str
@@ -24,4 +26,4 @@ class SessionFilter(Filter):
         if not (access := await redis.get(name=callback_data.redis_callback_data_key)):
             return False
 
-        return {"session": await redis.get(name=access)}
+        return {"session": Session.model_dump_json(await redis.get(name=access))}
