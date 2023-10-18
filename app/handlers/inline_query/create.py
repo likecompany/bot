@@ -19,9 +19,9 @@ async def create_game_handler(inline_query: InlineQuery) -> None:
             InlineQueryResultArticle(
                 id=inline_query.from_user.id,
                 title="Texas Holdem Poker",
-                input_message_content=[
-                    InputTextMessageContent(message_text="Create Texas Holdem Game Session")
-                ],
+                input_message_content=InputTextMessageContent(
+                    message_text="Create Texas Holdem Poker Game Session"
+                ),
                 reply_markup=create_game_inline_keyboard_builder().as_markup(),
             )
         ],
