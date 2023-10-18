@@ -12,13 +12,17 @@ from redis.asyncio.client import Redis
 
 from callback_data import CreateGameCallbackData
 from core.game import game
+from filters import SettingsFilter
 from logger import logger
 from schemas import Settings
 
 router = Router()
 
 
-@router.callback_query(CreateGameCallbackData.filter())
+@router.callback_query(
+    CreateGameCallbackData.filter(),
+    SettingsFilter(),
+)
 async def create_game_handler(
     callback_query: CallbackQuery,
     bot: Bot,
