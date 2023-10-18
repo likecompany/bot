@@ -28,4 +28,4 @@ class Position(Enum):
         if self == Position.COF:
             return "🇭"
 
-        return ""
+        return "🇧"

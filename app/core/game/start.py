@@ -3,16 +3,14 @@ from __future__ import annotations
 import time
 
 from aiogram import Bot
-from aiogram.fsm.context import FSMContext
 from likeinterface import Interface
 from likeinterface.exceptions import LikeInterfaceError
-from likeinterface.methods import AdjustGame, GetGame
+from likeinterface.methods import AdjustGame
 
 from enums import Round
 from keyboards import players_game_inline_keyboard_builder
 from logger import logger
 from schemas import Session, Settings
-from states import GameState
 
 
 def start_text(settings: Settings) -> str:
@@ -27,7 +25,7 @@ def start_text(settings: Settings) -> str:
 async def start_game(
     bot: Bot,
     inline_message_id: int,
-    state: FSMContext,
+    redis_callback_data_key: str,
     interface: Interface,
     session: Session,
     settings: Settings,
@@ -38,7 +36,7 @@ async def start_game(
             % inline_message_id
         )
 
-    players = len(session.game.players)
+    players = len(session.players)
     if settings.min_players <= players <= settings.max_players:
         session.ready_to_start = True
 
@@ -46,7 +44,9 @@ async def start_game(
         await bot.edit_message_text(
             inline_message_id=inline_message_id,
             text=start_text(settings=settings),
-            reply_markup=players_game_inline_keyboard_builder().as_markup(),
+            reply_markup=players_game_inline_keyboard_builder(
+                redis_callback_data_key=redis_callback_data_key
+            ).as_markup(),
         )
         session.start_at = None
 
@@ -78,19 +78,11 @@ async def start_game(
             )
         except LikeInterfaceError:
             session.started = False
-
-            await state.set_state(GameState.game_in_chat)
         else:
             session.started = True
-            session.last_known_round = None
-
-            await state.set_state(GameState.game_in_progress)
         finally:
-            session.last_known_current_player = None
             session.ready_to_start = False
             session.start_at = None
-
-            session.game = await interface.request(method=GetGame(access=session.access))
 
         return None
 

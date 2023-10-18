@@ -17,7 +17,7 @@ class GameError(Exception):
     ...
 
 
-class AdjustError(GameError):
+class CloseGameError(GameError):
     ...
 
 
@@ -25,25 +25,9 @@ class PlayerError(GameError):
     ...
 
 
-class NotEnoughBalanceError(PlayerError):
-    ...
-
-
 class JoinError(PlayerError):
     ...
 
 
-class LeftError(PlayerError):
-    ...
-
-
-class ActionError(GameError):
-    ...
-
-
-class NoPossibleActionsError(ActionError):
-    ...
-
-
-class InvalidActionError(ActionError):
+class ExitError(PlayerError):
     ...

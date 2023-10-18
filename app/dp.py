@@ -15,14 +15,14 @@ from handlers import router as handlers_router
 def create_dispatcher() -> Dispatcher:
     interface = Interface(network=Network(base=interface_settings.INTERFACE_BASE))
     scheduler = AsyncIOScheduler()
+    redis = Redis(host=fsm_settings.FSM_HOSTNAME, port=fsm_settings.FSM_PORT)
 
     dispatcher = Dispatcher(
-        storage=RedisStorage(
-            redis=Redis(host=fsm_settings.FSM_HOSTNAME, port=fsm_settings.FSM_PORT),
-        ),
-        fsm_strategy=FSMStrategy.CHAT,
+        storage=RedisStorage(redis=redis),
+        fsm_strategy=FSMStrategy.USER_IN_CHAT,
         interface=interface,
         scheduler=scheduler,
+        redis=redis,
     )
     dispatcher.include_router(handlers_router)
 

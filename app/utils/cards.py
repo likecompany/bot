@@ -3,19 +3,9 @@ from __future__ import annotations
 import random
 from typing import List
 
-from likeinterface.enums import Rank, State, Suit
 from pydantic import BaseModel, Field
 
-
-def suit_to_pretty_string(suit: Suit) -> str:
-    if suit == Suit.CLUBS:
-        return "♣"
-    if suit == Suit.DIAMONDS:
-        return "♦️"
-    if suit == suit.HEARTS:
-        return "❤️"
-
-    return "♠️"
+from enums import Rank, Suit
 
 
 class Card(BaseModel):
@@ -23,7 +13,7 @@ class Card(BaseModel):
     suit: Suit
 
     def as_string_pretty(self) -> None:
-        return self.rank.value + suit_to_pretty_string(suit=self.suit)
+        return self.rank.to_string_pretty() + self.suit.to_string_pretty()
 
     def __str__(self) -> str:
         return self.rank.value + self.suit.value

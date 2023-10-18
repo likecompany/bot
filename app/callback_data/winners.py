@@ -3,5 +3,5 @@ from __future__ import annotations
 from aiogram.filters.callback_data import CallbackData
 
 
-class ActionsCallbackData(CallbackData, prefix="actions"):
+class WinnersCallbackData(CallbackData, prefix="winners"):
     redis_callback_data_key: str

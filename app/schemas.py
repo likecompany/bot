@@ -16,6 +16,7 @@ class Settings(BaseModel):
     start_time: int = Field(15, gt=0)
     small_blind: int = Field(500, gt=0)
     big_blind_multiplication: int = Field(15, gt=0)
+    action_time: int = Field(15, le=40)
 
     @model_validator(mode="after")
     def check_passwords_match(self) -> Settings:
@@ -39,7 +40,7 @@ class Player(types.Player):
 
 class Session(BaseModel):
     access: str
-    game: types.Game
+    game: Optional[types.Game] = None
     cards: Cards
     actions: List[types.Action] = Field(default_factory=list)
     board: List[Card] = Field(default_factory=list)
@@ -47,3 +48,6 @@ class Session(BaseModel):
     started: bool = False
     ready_to_start: bool = False
     start_at: Optional[float] = None
+    wait_for_action: bool = False
+    action_end_at: Optional[float] = None
+    winners: Optional[str] = None

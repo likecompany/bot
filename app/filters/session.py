@@ -1,24 +1,27 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Union
+from typing import Any, Dict, Protocol, Union
 
 from aiogram.filters import Filter
-from aiogram.fsm.context import FSMContext
-from aiogram.types import TelegramObject
-from likeinterface import Interface
-from pydantic import ValidationError
+from aiogram.types import CallbackQuery
+from redis.asyncio.client import Redis
 
-from schemas import Session
+
+class CallbackDataProtocol(Protocol):
+    redis_callback_data_key: str
 
 
 class SessionFilter(Filter):
     async def __call__(
         self,
-        event: TelegramObject,
-        state: FSMContext,
-        interface: Interface,
+        event: Union[CallbackQuery, Any],
+        callback_data: CallbackDataProtocol,
+        redis: Redis,
     ) -> Union[bool, Dict[str, Any]]:
-        try:
-            return {"session": Session.model_validate(await state.get_data())}
-        except ValidationError:
+        if not isinstance(event, CallbackQuery):
             return False
+
+        if not (access := await redis.get(name=callback_data.redis_callback_data_key)):
+            return False
+
+        return {"session": await redis.get(name=access)}

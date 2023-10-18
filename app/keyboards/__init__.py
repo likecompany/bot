@@ -5,5 +5,8 @@ from .settings import settings_inline_keyboard_builder
 
 __all__ = (
     "cards_inline_keyboard_builder",
+    "create_game_inline_keyboard_builder",
+    "game_inline_keyboard_builder",
+    "players_game_inline_keyboard_builder",
     "settings_inline_keyboard_builder",
 )

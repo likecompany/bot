@@ -1,7 +1,8 @@
 from aiogram import Router
 
-from .groups import router as groups_router
-from .private import router as private_router
+from .callback_query import router as callback_query_router
+from .inline_query import router as inline_query_router
+from .message import router as message_router
 
 router = Router()
-router.include_routers(groups_router, private_router)
+router.include_routers(callback_query_router, inline_query_router, message_router)

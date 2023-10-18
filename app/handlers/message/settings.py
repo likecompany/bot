@@ -3,35 +3,31 @@ from __future__ import annotations
 from aiogram import Router
 from aiogram.filters import Command, or_f
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import default_state
+from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.types import CallbackQuery, Message
 from pydantic import ValidationError
 
 from callback_data import SettingsCallbackData
 from exc import InvalidValueError
-from filters import IsOwner, SettingsFilter
+from filters import SettingsFilter
 from keyboards import settings_inline_keyboard_builder
 from schemas import Settings
-from states import GameState
 
 router = Router()
 
 
-@router.message(
-    Command(commands="reset"),
-    or_f(default_state, GameState.no_state),
-    IsOwner(),
-)
+class SettingsState(StatesGroup):
+    no_state = State()
+    update = State()
+
+
+@router.message(Command(commands="reset"))
 async def restart(message: Message, state: FSMContext) -> None:
     await state.clear()
     await message.answer(text="Settings have been reset")
 
 
-@router.message(
-    Command(commands="settings"),
-    or_f(default_state, GameState.no_state),
-    IsOwner(),
-)
+@router.message(Command(commands="settings"))
 async def settings_command_handler(message: Message) -> None:
     await message.answer(
         text="Here is your create game settings",
@@ -40,9 +36,8 @@ async def settings_command_handler(message: Message) -> None:
 
 
 @router.message(
-    GameState.update_settings,
+    SettingsState.update,
     SettingsFilter(),
-    IsOwner(),
 )
 async def update_state_handler(
     message: Message,
@@ -57,15 +52,14 @@ async def update_state_handler(
         raise InvalidValueError("Invalid value")
 
     await state.update_data(**settings.model_dump())
-    await state.set_state(GameState.no_state)
+    await state.set_state(SettingsState.no_state)
     await message.answer(text="Setting is updated!")
 
 
 @router.callback_query(
     SettingsCallbackData.filter(),
-    or_f(default_state, GameState.no_state),
+    or_f(default_state, SettingsState.no_state),
     SettingsFilter(),
-    IsOwner(),
 )
 async def settings_callback_query_handler(
     callback_query: CallbackQuery,
@@ -79,5 +73,5 @@ async def settings_callback_query_handler(
         )
     else:
         await callback_query.message.answer(text="Enter new value")
-        await state.set_state(state=GameState.update_settings)
+        await state.set_state(state=SettingsState.update)
         await state.set_data({"attr": callback_data.attr})
