@@ -48,8 +48,7 @@ async def auto_execute_action(
     if session.action_end_at <= time.time():
         logger.info(
             "(inline_message_id=%s) Player action time is ended, "
-            "engine will found **check** or **fold** (**check** in the priority)"
-            % inline_message_id
+            "engine will found **check** or **fold**" % inline_message_id
         )
 
         execute = None
@@ -59,8 +58,7 @@ async def auto_execute_action(
             if action.action == Action.CHECK.value:
                 execute = action
                 logger.info(
-                    "(inline_message_id=%s) Action **check** was found, rejecting **fold**"
-                    % inline_message_id
+                    "(inline_message_id=%s) Action **check** was found" % inline_message_id
                 )
 
         if not execute:
