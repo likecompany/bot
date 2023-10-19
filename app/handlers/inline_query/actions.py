@@ -53,5 +53,6 @@ async def actions_handler(
             )
             for action in session.actions
         ],
+        cache_time=int(time.time() - (session.action_end_at if session.action_end_at else 0)),
         is_personal=True,
     )
