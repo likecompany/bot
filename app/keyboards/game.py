@@ -63,10 +63,11 @@ def game_ended_inline_keyboard_builder(redis_callback_data_key: str) -> InlineKe
     builder = InlineKeyboardBuilder()
 
     builder.from_markup(
-        game_inline_keyboard_builder(redis_callback_data_key=redis_callback_data_key).as_markup()
-        + players_game_inline_keyboard_builder(
-            redis_callback_data_key=redis_callback_data_key
-        ).as_markup()
+        game_inline_keyboard_builder(redis_callback_data_key=redis_callback_data_key)
+        .attach(
+            players_game_inline_keyboard_builder(redis_callback_data_key=redis_callback_data_key)
+        )
+        .as_markup()
     )
     builder.row(
         InlineKeyboardButton(
