@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 from aiogram import F, Router
 from aiogram.enums import ChatType, ParseMode
 from aiogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent
@@ -36,7 +38,7 @@ async def actions_handler(
     await inline_query.answer(
         results=[
             InlineQueryResultArticle(
-                id=Action(action.action).to_string(),
+                id=str(time.time()),
                 title=f"{Action(action.action).to_string().capitalize()}: {get_action_amount(action=action, session=session)}",
                 input_message_content=InputTextMessageContent(
                     message_text=f"Click button to execute {markdown.hbold(Action(action.action).to_string())}",
