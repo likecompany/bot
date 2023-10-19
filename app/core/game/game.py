@@ -54,13 +54,9 @@ async def core(
         session=session,
     )
 
-    await update_players(inline_message_id=inline_message_id, interface=interface, session=session)
+    await update_players(interface=interface, session=session)
 
-    await find_winners(
-        inline_message_id=inline_message_id,
-        interface=interface,
-        session=session,
-    )
+    await find_winners(inline_message_id=inline_message_id, interface=interface, session=session)
 
     await start_game(
         bot=bot,
@@ -83,9 +79,7 @@ async def core(
     )
 
     await deal_cards(
-        inline_message_id=inline_message_id,
-        session=session,
-        reset=bool(session.winners),
+        inline_message_id=inline_message_id, session=session, reset=bool(session.winners)
     )
 
     await auto_execute_action(

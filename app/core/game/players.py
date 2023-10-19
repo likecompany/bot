@@ -3,12 +3,10 @@ from __future__ import annotations
 from likeinterface import Interface
 from likeinterface.methods import GetUser
 
-from logger import logger
 from schemas import Player, Session
 
 
 async def update_players(
-    inline_message_id: int,
     interface: Interface,
     session: Session,
 ) -> None:
@@ -20,5 +18,3 @@ async def update_players(
         )
         for position, player in enumerate(session.game.players)
     ]
-
-    return None

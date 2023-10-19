@@ -10,7 +10,10 @@ from likeinterface.exceptions import LikeInterfaceError
 from likeinterface.methods import AdjustGame
 
 from enums import Round
-from keyboards import players_game_inline_keyboard_builder
+from keyboards import (
+    game_ended_inline_keyboard_builder,
+    players_game_inline_keyboard_builder,
+)
 from logger import logger
 from schemas import Session, Settings
 
@@ -97,5 +100,18 @@ async def start_game(
             text=start_text(settings=settings)
             + f"\n\nThe game will start in {session.start_at - current_time} seconds",
         )
+
+        if session.game.round == Round.SHOWDOWN.value:
+            await bot.edit_message_reply_markup(
+                reply_markup=game_ended_inline_keyboard_builder(
+                    redis_callback_data_key=redis_callback_data_key
+                )
+            )
+        else:
+            await bot.edit_message_reply_markup(
+                reply_markup=players_game_inline_keyboard_builder(
+                    redis_callback_data_key=redis_callback_data_key
+                )
+            )
 
     return None
