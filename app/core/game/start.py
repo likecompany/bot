@@ -105,13 +105,13 @@ async def start_game(
             await bot.edit_message_reply_markup(
                 reply_markup=game_ended_inline_keyboard_builder(
                     redis_callback_data_key=redis_callback_data_key
-                )
+                ).as_markup()
             )
         else:
             await bot.edit_message_reply_markup(
                 reply_markup=players_game_inline_keyboard_builder(
                     redis_callback_data_key=redis_callback_data_key
-                )
+                ).as_markup()
             )
 
     return None

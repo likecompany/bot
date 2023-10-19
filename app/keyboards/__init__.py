@@ -1,4 +1,3 @@
-from .cards import cards_inline_keyboard_builder
 from .create_game import create_game_inline_keyboard_builder
 from .game import (
     game_ended_inline_keyboard_builder,
@@ -8,7 +7,6 @@ from .game import (
 from .settings import settings_inline_keyboard_builder
 
 __all__ = (
-    "cards_inline_keyboard_builder",
     "create_game_inline_keyboard_builder",
     "game_ended_inline_keyboard_builder",
     "game_inline_keyboard_builder",
