@@ -22,10 +22,9 @@ async def deal_cards(
             "(inline_message_id=%s) Game not started, skipping..." % inline_message_id
         )
 
-    if session.game.round == Round.PREFLOP.value:
-        for player in session.players:
-            if not player.hand:
-                player.hand = session.cards.deal(n=hand_size)
+    for player in session.players:
+        if not player.hand:
+            player.hand = session.cards.deal(n=hand_size)
 
     if session.game.round != Round.PREFLOP.value:
         if not session.board:
