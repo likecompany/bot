@@ -64,7 +64,7 @@ async def find_winners(
     session.winners = (
         winners
         if winners
-        else f"There is only one winner - {find_if(collection=session.players, condition=lambda x: x.state in [State.ALIVE.value, State.ALLIN]).mention_html()}"
+        else f"There is only one winner - {find_if(collection=session.players, condition=lambda x: x.state in [State.ALIVE.value, State.ALLIN.value]).mention_html()}"
     )
 
     await interface.request(method=SetNextGame(access=session.access, cards=cards))
