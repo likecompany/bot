@@ -40,7 +40,7 @@ def game_inline_keyboard_builder(redis_callback_data_key: str) -> InlineKeyboard
         ),
         InlineKeyboardButton(
             text="Post Action",
-            switch_inline_query_current_chat=f"action {redis_callback_data_key}",
+            switch_inline_query_current_chat=redis_callback_data_key,
         ),
     )
     builder.row(

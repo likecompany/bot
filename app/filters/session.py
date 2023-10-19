@@ -16,16 +16,10 @@ class CallbackDataProtocol(Protocol):
 class SessionFilter(Filter):
     async def __call__(
         self,
-        event: Union[CallbackQuery, InlineQuery, Any],
+        event: Union[CallbackQuery, InlineQuery],
         callback_data: Optional[CallbackDataProtocol],
         redis: Redis,
     ) -> Union[bool, Dict[str, Any]]:
-        if not isinstance(event, CallbackQuery):
-            return False
-
-        if not isinstance(event, InlineQuery):
-            return False
-
         if callback_data:
             redis_callback_data_key = callback_data.redis_callback_data_key
         else:
