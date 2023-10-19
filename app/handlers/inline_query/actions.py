@@ -53,4 +53,5 @@ async def actions_handler(
             )
             for action in session.actions
         ],
+        is_personal=True,
     )
