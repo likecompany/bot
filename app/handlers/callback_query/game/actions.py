@@ -5,7 +5,7 @@ from contextlib import suppress
 from aiogram import Router
 from aiogram.exceptions import TelegramAPIError
 from aiogram.types import CallbackQuery
-from likeinterface import Interface
+from likeinterface import Interface, types
 from likeinterface.methods import ExecuteAction
 
 from callback_data import ActionsCallbackData, ExecuteActionCallbackData
@@ -51,7 +51,11 @@ async def execute_action_handler(
     await interface.request(
         method=ExecuteAction(
             access=session.access,
-            action=callback_data.action,
+            action=types.Action(
+                action=callback_data.action,
+                amount=callback_data.amount,
+                position=callback_data.position,
+            ),
         )
     )
 
