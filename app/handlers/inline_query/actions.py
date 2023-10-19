@@ -42,7 +42,7 @@ async def actions_handler(
         results=[
             InlineQueryResultArticle(
                 id=Action(action.action).to_string(),
-                title=f"{Action(action.action).to_string().capitalize()}: {get_action_amount(action=action)}",
+                title=f"{Action(action.action).to_string().capitalize()}: {get_action_amount(action=action, session=session)}",
                 input_message_content=InputTextMessageContent(
                     message_text=f"Click button to execute {markdown.hbold(Action(action.action).to_string())}",
                     parse_mode=ParseMode.HTML,
