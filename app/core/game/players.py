@@ -14,6 +14,7 @@ async def update_players(
         Player(
             position=position,
             user=await interface.request(method=GetUser(user_id=player.id)),
+            hand=session.players[position].hand,
             **player.model_dump(),
         )
         for position, player in enumerate(session.game.players)
