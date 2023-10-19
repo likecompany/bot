@@ -17,8 +17,8 @@ class SessionFilter(Filter):
     async def __call__(
         self,
         event: Union[CallbackQuery, InlineQuery],
-        callback_data: Optional[CallbackDataProtocol],
         redis: Redis,
+        callback_data: Optional[CallbackDataProtocol] = None,
     ) -> Union[bool, Dict[str, Any]]:
         if callback_data:
             redis_callback_data_key = callback_data.redis_callback_data_key

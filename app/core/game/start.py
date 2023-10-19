@@ -62,14 +62,6 @@ async def start_game(
         )
 
     if players < settings.min_players:
-        if session.ready_to_start:
-            with suppress(TelegramBadRequest):
-                await bot.edit_message_text(
-                    inline_message_id=inline_message_id,
-                    text=start_text(settings=settings)
-                    + "Game doesn't start, not enough players...",
-                )
-
         session.ready_to_start = False
         session.start_at = None
 
