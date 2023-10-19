@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-from contextlib import suppress
-
 from aiogram import Router
-from aiogram.exceptions import TelegramAPIError
 from aiogram.types import CallbackQuery
 from likeinterface import Interface, types
 from likeinterface.methods import ExecuteAction
@@ -58,9 +55,6 @@ async def execute_action_handler(
             ),
         )
     )
-
-    with suppress(TelegramAPIError):
-        await callback_query.message.delete()
 
     await callback_query.answer(text="Successfully")
 
