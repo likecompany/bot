@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Protocol, Union
+from typing import Any, Dict, Optional, Protocol, Union
 
 from aiogram.filters import Filter
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, InlineQuery
 from redis.asyncio.client import Redis
 
 from schemas import Session
@@ -16,14 +16,25 @@ class CallbackDataProtocol(Protocol):
 class SessionFilter(Filter):
     async def __call__(
         self,
-        event: Union[CallbackQuery, Any],
-        callback_data: CallbackDataProtocol,
+        event: Union[CallbackQuery, InlineQuery, Any],
+        callback_data: Optional[CallbackDataProtocol],
         redis: Redis,
     ) -> Union[bool, Dict[str, Any]]:
         if not isinstance(event, CallbackQuery):
             return False
 
-        if not (access := await redis.get(name=callback_data.redis_callback_data_key)):
+        if not isinstance(event, InlineQuery):
             return False
 
-        return {"session": Session.model_validate_json(await redis.get(name=access))}
+        if callback_data:
+            redis_callback_data_key = callback_data.redis_callback_data_key
+        else:
+            redis_callback_data_key, *_ = event.query.split()
+
+        if not (access := await redis.get(name=redis_callback_data_key)):
+            return False
+
+        return {
+            "session": Session.model_validate_json(await redis.get(name=access)),
+            "redis_callback_data_key": redis_callback_data_key,
+        }

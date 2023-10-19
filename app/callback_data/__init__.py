@@ -1,4 +1,4 @@
-from .actions import ActionsCallbackData
+from .actions import ActionsCallbackData, ExecuteActionCallbackData
 from .cards import CardsCallbackData
 from .create_game import CreateGameCallbackData
 from .exit import ExitCallbackData
@@ -11,6 +11,7 @@ __all__ = (
     "ActionsCallbackData",
     "CardsCallbackData",
     "CreateGameCallbackData",
+    "ExecuteActionCallbackData",
     "ExitCallbackData",
     "JoinCallbackData",
     "PlayersCallbackData",

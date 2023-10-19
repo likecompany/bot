@@ -29,6 +29,8 @@ class Action(Enum):
 
     @classmethod
     def from_string(cls, value: str) -> Action:
+        value = value.lower()
+
         if value == "check":
             return cls(Action.CHECK)
         if value == "fold":

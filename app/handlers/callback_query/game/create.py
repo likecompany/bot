@@ -57,7 +57,7 @@ async def create_game_handler(
         game,
         kwargs={
             "scheduler": scheduler,
-            "job_id": access,
+            "job_id": callback_query.inline_message_id,
             "access": access,
             "bot": bot,
             "inline_message_id": callback_query.inline_message_id,
