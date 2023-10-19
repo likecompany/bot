@@ -8,11 +8,16 @@ from schemas import Session
 async def deal_cards(
     inline_message_id: int,
     session: Session,
-    reset: bool = False,
     hand_size: int = 2,
     board_size: int = 5,
 ) -> None:
     if not session.started:
+        session.cards.reset()
+        session.board.clear()
+
+        for player in session.players:
+            player.hand.clear()
+
         return logger.info(
             "(inline_message_id=%s) Game not started, skipping..." % inline_message_id
         )
@@ -33,19 +38,5 @@ async def deal_cards(
             session.board += session.cards.deal(
                 n=session.game.round - 1 if session.game.round != Round.SHOWDOWN else 0
             )
-
-    if reset:
-        logger.info(
-            "(inline_message_id=%s) Cards: BOARD %s, HANDS %s"
-            % (inline_message_id, session.board, [player.hand for player in session.players])
-        )
-
-        session.cards.reset()
-        session.board.clear()
-
-        for player in session.players:
-            player.hand.clear()
-
-        return None
 
     return None

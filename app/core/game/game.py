@@ -78,9 +78,7 @@ async def core(
         session=session,
     )
 
-    await deal_cards(
-        inline_message_id=inline_message_id, session=session, reset=bool(session.winners)
-    )
+    await deal_cards(inline_message_id=inline_message_id, session=session)
 
     await auto_execute_action(
         inline_message_id=inline_message_id,

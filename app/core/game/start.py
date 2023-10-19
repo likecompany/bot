@@ -79,6 +79,7 @@ async def start_game(
         except LikeInterfaceError:
             session.started = False
         else:
+            session.winners = None
             session.started = True
         finally:
             session.ready_to_start = False
@@ -93,14 +94,11 @@ async def start_game(
             + f"\n\nThe game will start in {int(session.start_at - current_time)} seconds",
             reply_markup=players_game_inline_keyboard_builder(
                 redis_callback_data_key=redis_callback_data_key
+            ).as_markup()
+            if not session.game.round == Round.SHOWDOWN.value
+            else game_ended_inline_keyboard_builder(
+                redis_callback_data_key=redis_callback_data_key
             ).as_markup(),
         )
-
-        if session.game.round == Round.SHOWDOWN.value:
-            await bot.edit_message_reply_markup(
-                reply_markup=game_ended_inline_keyboard_builder(
-                    redis_callback_data_key=redis_callback_data_key
-                ).as_markup()
-            )
 
     return None
