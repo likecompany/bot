@@ -22,7 +22,7 @@ def players_text(session: Session) -> List[str]:
             username=player.user.username,
             state=State(player.state).to_string_pretty(),
             chips=player.behind,
-            bet=player.round_bet,
+            round_bet=player.round_bet,
         )
         for player in session.players
     ]
