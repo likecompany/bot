@@ -33,11 +33,6 @@ async def actions_handler(
     session: Session,
     redis_callback_data_key: str,
 ) -> None:
-    try:
-        amount = int(inline_query.query.split()[-1])
-    except ValueError:
-        amount = 0
-
     await inline_query.answer(
         results=[
             InlineQueryResultArticle(
@@ -49,10 +44,7 @@ async def actions_handler(
                 ),
                 reply_markup=execute_action_inline_keyboard_builder(
                     action=action.action,
-                    amount=amount
-                    if action.action == Action.RAISE.value
-                    and session.game.min_raise <= amount <= action.amount
-                    else session.game.min_raise,
+                    amount=action.amount,
                     position=action.position,
                     redis_callback_data_key=redis_callback_data_key,
                 ).as_markup(),
