@@ -1,3 +1,3 @@
-from .inline_query import router
+from .inline_query import setup as setup_inline_query
 
-__all__ = ("router",)
+__all__ = ("setup_inline_query",)

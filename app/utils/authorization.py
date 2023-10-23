@@ -11,7 +11,7 @@ from core.settings import bot_settings
 
 
 def create_telegram_authorization(
-    id: int,
+    telegram_id: int,
     first_name: str,
     last_name: Optional[str],
     username: Optional[str],
@@ -24,7 +24,7 @@ def create_telegram_authorization(
             f"{key}={value}"
             for key, value in sorted(
                 {
-                    "id": id,
+                    "id": telegram_id,
                     "first_name": first_name,
                     "last_name": last_name,
                     "username": username,
@@ -37,7 +37,7 @@ def create_telegram_authorization(
     secret_key = hashlib.sha256(bot_settings.BOT_TOKEN.encode()).digest()
 
     return SignIn(
-        telegram_id=id,
+        telegram_id=telegram_id,
         first_name=first_name,
         last_name=last_name,
         username=username,

@@ -9,7 +9,7 @@ from redis.asyncio.client import Redis
 
 from core.middleware import create_middleware
 from core.settings import fsm_settings, interface_settings
-from handlers import router as handlers_router
+from handlers import setup_handlers
 
 
 def create_dispatcher() -> Dispatcher:
@@ -24,6 +24,8 @@ def create_dispatcher() -> Dispatcher:
         scheduler=scheduler,
         redis=redis,
     )
+
+    handlers_router = setup_handlers()
     dispatcher.include_router(handlers_router)
 
     def create_on_event() -> None:

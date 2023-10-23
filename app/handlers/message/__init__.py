@@ -1,3 +1,3 @@
-from .message import router
+from .message import setup as setup_message
 
-__all__ = ("router",)
+__all__ = ("setup_message",)

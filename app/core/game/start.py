@@ -10,21 +10,10 @@ from likeinterface.exceptions import LikeInterfaceError
 from likeinterface.methods import AdjustGame
 
 from enums import Round
-from keyboards import (
-    game_ended_inline_keyboard_builder,
-    players_game_inline_keyboard_builder,
-)
+from keyboards import game_ended_inline_keyboard_builder
+from keyboards.exit import exit_inline_keyboard_builder
 from logger import logger
 from schemas import Session, Settings
-
-
-def start_text(settings: Settings) -> str:
-    return (
-        f"Texas Holdem Poker\n"
-        f"Stacksize: {settings.small_blind * 2 * settings.big_blind_multiplication}\n\n"
-        f"Small Blind: {settings.small_blind}\n"
-        f"Big Blind: {settings.small_blind * 2}"
-    )
 
 
 async def start_game(
@@ -46,14 +35,6 @@ async def start_game(
         session.ready_to_start = True
 
     if not session.ready_to_start:
-        with suppress(TelegramBadRequest):
-            await bot.edit_message_text(
-                inline_message_id=inline_message_id,
-                text=start_text(settings=settings),
-                reply_markup=players_game_inline_keyboard_builder(
-                    redis_callback_data_key=redis_callback_data_key
-                ).as_markup(),
-            )
         session.start_at = None
 
         return logger.info(
@@ -90,15 +71,10 @@ async def start_game(
     with suppress(TelegramBadRequest):
         await bot.edit_message_text(
             inline_message_id=inline_message_id,
-            text=start_text(settings=settings)
-            + f"\n\nThe game will start in {int(session.start_at - current_time)} seconds",
-            reply_markup=players_game_inline_keyboard_builder(
-                redis_callback_data_key=redis_callback_data_key
-            ).as_markup()
+            text=f"The game will start in {int(session.start_at - current_time)} seconds",
+            reply_markup=exit_inline_keyboard_builder().as_markup()
             if not session.game.round == Round.SHOWDOWN.value
-            else game_ended_inline_keyboard_builder(
-                redis_callback_data_key=redis_callback_data_key
-            ).as_markup(),
+            else game_ended_inline_keyboard_builder().as_markup(),
         )
 
     return None

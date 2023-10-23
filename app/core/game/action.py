@@ -3,7 +3,6 @@ from __future__ import annotations
 import time
 
 from likeinterface import Interface
-from likeinterface.exceptions import LikeInterfaceError
 from likeinterface.methods import ExecuteAction, GetPossibleActions
 
 from enums import Action, Round
@@ -11,27 +10,22 @@ from logger import logger
 from schemas import Session, Settings
 
 
-async def possible_actions(
+async def set_actions(
     inline_message_id: int,
     interface: Interface,
     session: Session,
 ) -> None:
     if not session.started or session.game.round == Round.SHOWDOWN.value:
         return logger.info(
-            "(inline_message_id=%s) Find winners not available, because game in invalid state, skipping..."
+            "(inline_message_id=%s) Set actions not available, because game in invalid state, skipping..."
             % inline_message_id
         )
 
-    try:
-        session.actions = await interface.request(method=GetPossibleActions(access=session.access))
-    except LikeInterfaceError:
-        logger.warning(
-            "(inline_message_id=%s) Skipping get possible actions..." % inline_message_id
-        )
-        raise
+    session.actions = await interface.request(method=GetPossibleActions(access=session.access))
+    return None
 
 
-async def auto_execute_action(
+async def auto_player_action(
     inline_message_id: int,
     interface: Interface,
     session: Session,

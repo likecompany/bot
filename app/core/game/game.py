@@ -20,6 +20,16 @@ from .players import update_players
 from .start import start_game
 
 
+async def get_session(access: str, redis: Redis) -> Session:
+    session = await redis.get(name=access)
+
+    return (
+        Session(access=access, cards=Cards())
+        if not session
+        else Session.model_validate_json(session)
+    )
+
+
 async def set_game(
     scheduler: AsyncIOScheduler,
     job_id: int,
@@ -99,13 +109,7 @@ async def game(
     interface: Interface,
     settings: Settings,
 ) -> None:
-    session_json = await redis.get(name=access)
-
-    session = (
-        Session(access=access, cards=Cards())
-        if not session_json
-        else Session.model_validate_json(session_json)
-    )
+    session = await get_session(access=access, redis=redis)
 
     try:
         await core(

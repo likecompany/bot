@@ -4,4 +4,4 @@ from aiogram.filters.callback_data import CallbackData
 
 
 class CreateGameCallbackData(CallbackData, prefix="create_game"):
-    ...
+    game: str

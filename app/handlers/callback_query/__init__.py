@@ -1,3 +1,3 @@
-from .callback_query import router
+from .callback_query import setup as setup_callback_query
 
-__all__ = ("router",)
+__all__ = ("setup_callback_query",)

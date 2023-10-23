@@ -1,3 +1,3 @@
-from .handlers import router
+from .handlers import setup as setup_handlers
 
-__all__ = ("router",)
+__all__ = ("setup_handlers",)
